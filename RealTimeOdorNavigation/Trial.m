@@ -50,32 +50,51 @@ classdef Trial
         end
         
         %% Get Methods
-        function [ethdata] = GetETHData(input, inc_time)
-            ethdata = zeroes(length(input.EthData));
+        function result = GetETHData(input, inc_time)
+            voltage = zeros(size(input.EthData));
             import ETH_Sensor
             if inc_time
-                for i = 1:length(ethdata)
-                    ethdata(i) = ETH_Sensor.GetETHVoltageWithTime(input.EthData(i));
+                for i = 1:length(input.EthData)
+                    time = zeros(size(input.EthData));
+                    [voltage(i), time(i)] = input.EthData(i).GetETHVoltageWithTime();
                 end
+                result = [voltage, time];
             else
-                for i = 1:length(ethdata)
-                    ethdata(i) = ETH_Sensor.GetETHReading(input.EthData(i));
+                for i = 1:length(input.EthData)
+                    [voltage(i)] = input.EthData(i).GetETHReading();
                 end
+                result = voltage;
             end
         end
         
-        function [accdata] = GetAccelerometerData(input, inc_time)
-            accdata = zeroes(length(input.AccData));
+        function result = GetAccelerometerData(input, inc_time)
             import Accelerometer
+            x = zeros(size(input.AccData));
+            y = zeros(size(input.AccData));
+            z = zeros(size(input.AccData));
             if inc_time
-                for i = 1:length(accdata)
-                    accdata(i) = Accelerometer.GetAccReadingWithTime(input.AccData(i));
+                for i = 1:length(input.AccData)
+                    time = zeros(size(input.AccData));
+                    [x(i), y(i), z(i), time(i)] = input.AccData(i).GetAccReadingWithTime();
                 end
+                result = [x, y, z, time];
             else
-                for i = 1:length(accdata)
-                    accdata(i) = Accelerometer.GetAccReading(input.AccData(i));
+                for i = 1:length(input.AccData)
+                    [x(i), y(i), z(i)] = input.AccData(i).GetAccReading();
                 end
+                result = [x, y, z];
             end
+        end
+        
+        function result = GetFrameData(input)
+            import CameraFrame
+            index = zeros(size(input.PositionData));
+            timestamp = zeros(size(input.PositionData));
+            coords = zeros(size(input.PositionData));
+            for i = 1:size(input.PositionData)
+                [index(i), timestamp(i), coords(i)] = input.PositionData(i).GetDataForFrame();
+            end
+            result = [index, timestamp, coords];
         end
     end
 end

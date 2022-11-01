@@ -14,14 +14,14 @@ classdef CameraFrame
         end
         
         %% Get Methods
-        function [output] = GetDataForFrame(input)
-            output(1) = input.GetFrameIndex();
-            output(2) = input.GetFrameTimestamp();
-            output(3) = input.GetCoordinatesForFrame(true);
+        function [index, timestamp, coords] = GetDataForFrame(input)
+            index = input.GetFrameIndex();
+            timestamp = input.GetFrameTimestamp();
+            coords = input.GetCoordinatesForFrame(true);
         end
         
-        function [output] = GetCoordinatesForFrame(input, inc_likelihood)
-            output = Camera.GetAllPoints(input.CameraData, inc_likelihood, true);
+        function output = GetCoordinatesForFrame(input, inc_likelihood)
+            output = input.CameraData.GetAllPoints(inc_likelihood, true);
         end
         
         function index = GetFrameIndex(input)

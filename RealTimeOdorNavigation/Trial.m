@@ -2,7 +2,7 @@ classdef Trial
     properties
         Name char
         SubjectID uint16
-        SubjectTrialForDay uint16
+        TrialNum uint16
         Date datetime
         PositionData CameraFrame
         ArenaData Arena
@@ -16,7 +16,7 @@ classdef Trial
                 obj.Name = camera_file.name(1:length(camera_file.name)-4);
                 subStr = extractBetween(camera_file.name, "CB", "_");
                 obj.SubjectID = str2num(char(extractBefore(subStr, '-')));
-                obj.SubjectTrialForDay = str2num(char(extractAfter(subStr, '-')));
+                obj.TrialNum = str2num(char(extractAfter(subStr, '-')));
                 clear subStr
                 
                 cameraData = csvread(camera_file.name, 3, 0);
@@ -46,6 +46,35 @@ classdef Trial
                 obj.PositionData = obj.PositionData';
                 obj.EthData = obj.EthData';
                 obj.AccData = obj.AccData';
+            end
+        end
+        
+        %% Get Methods
+        function [ethdata] = GetETHData(input, inc_time)
+            ethdata = zeroes(length(input.EthData));
+            import ETH_Sensor
+            if inc_time
+                for i = 1:length(ethdata)
+                    ethdata(i) = ETH_Sensor.GetETHVoltageWithTime(input.EthData(i));
+                end
+            else
+                for i = 1:length(ethdata)
+                    ethdata(i) = ETH_Sensor.GetETHReading(input.EthData(i));
+                end
+            end
+        end
+        
+        function [accdata] = GetAccelerometerData(input, inc_time)
+            accdata = zeroes(length(input.AccData));
+            import Accelerometer
+            if inc_time
+                for i = 1:length(accdata)
+                    accdata(i) = Accelerometer.GetAccReadingWithTime(input.AccData(i));
+                end
+            else
+                for i = 1:length(accdata)
+                    accdata(i) = Accelerometer.GetAccReading(input.AccData(i));
+                end
             end
         end
     end

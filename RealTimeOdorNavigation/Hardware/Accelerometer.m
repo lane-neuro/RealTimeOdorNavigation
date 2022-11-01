@@ -16,5 +16,20 @@ classdef Accelerometer
                 obj.CameraTime = c_time;
             end
         end
+        
+        function [x, y, z] = GetAccReading(input)
+            x = input.X;
+            y = input.Y;
+            z = input.Z;
+        end
+        
+        function time = GetAccTime(input)
+            time = input.Time;
+        end
+        
+        function [reading, time] = GetAccReadingWithTime(input)
+            reading = input.GetAccReading();
+            time = input.GetAccTime();
+        end
     end
 end

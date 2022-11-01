@@ -13,29 +13,7 @@ import RealTimeOdorNavigation
 data = RealTimeOdorNavigation(files);
 
 %%
-%{
-    % arena bounds data 
-    trial_data(i).arena(1).topLeft(1).x = mode(tempData(:, 23));
-    trial_data(i).arena(1).topLeft(1).y = mode(tempData(:, 24));
-    trial_data(i).arena(1).topRight(1).x = mode(tempData(:, 26));
-    trial_data(i).arena(1).topRight(1).y = mode(tempData(:, 27));
-    trial_data(i).arena(1).bottomLeft(1).x = mode(tempData(:, 29));
-    trial_data(i).arena(1).bottomLeft(1).y = mode(tempData(:, 30));
-    trial_data(i).arena(1).bottomRight(1).x = mode(tempData(:, 32));
-    trial_data(i).arena(1).bottomRight(1).y = mode(tempData(:, 33));
-    
-    % median port calculation
-    trial_data(i).arena(1).port(1).x = median(tempData(:, 20));
-    trial_data(i).arena(1).port(1).y = median(tempData(:, 21));
-    
-    trial_data(i).stats(1).trialName = files(i).name(1:length(files(i).name)-4);
-    
-    trial_data(i).stats(1).startFrame = 0;
-    trial_data(i).stats(1).endFrame = trial_data(i).frame(end).index;
-     
-%     trial_data(i).stats(1).jumps(1).startFrame = 0;
-%     trial_data(i).stats(1).jumps(1).endFrame = 0;
-    
+%{   
 
 %% Velocity/Timing Calculations
 

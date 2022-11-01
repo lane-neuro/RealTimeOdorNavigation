@@ -13,5 +13,18 @@ classdef ETH_Sensor
                 obj.CameraTime = c_time;
             end
         end
+        
+        function voltage = GetETHReading(input)
+            voltage = input.Voltage;
+        end
+        
+        function time = GetETHTime(input)
+            time = input.Time;
+        end
+        
+        function [voltage, time] = GetETHVoltageWithTime(input)
+            voltage = GetETHReading(input);
+            time = GetETHTime(input);
+        end
     end
 end

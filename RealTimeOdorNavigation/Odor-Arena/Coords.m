@@ -19,5 +19,37 @@ classdef Coords
                 obj.Likelihood = Likelihood_in;
             end
         end
+        
+        function x = GetX(input, lh)
+            if lh && ~input.isStatic
+                x = [input.X, input.GetLikelihood()];
+            else
+                x = input.X;
+            end
+        end
+        
+        function y = GetY(input, lh)
+            if lh && ~input.isStatic
+                y = [input.Y, input.GetLikelihood()];
+            else
+                y = input.Y;
+            end
+        end
+        
+        function likelihood = GetLikelihood(input)
+            if input.isStatic
+                likelihood = 0;
+            else
+                likelihood = input.Likelihood;
+            end
+        end
+        
+        function [output] = GetCoord(input, lh)
+            output(1) = input.GetX();
+            output(2) = input.GetY();
+            if lh
+                output(3) = input.GetLikelihood();
+            end
+        end
     end
 end

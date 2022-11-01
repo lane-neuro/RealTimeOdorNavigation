@@ -5,11 +5,11 @@ Mouse Olfaction - Real Time Navigational Analysis - Tariq et al. (UW: Gire Lab; 
 
 ## (root) RealTimeOdorNavigation/
 
-### ./RealTimeOdorNavigation
+### RealTimeOdorNavigation.m
 RealTimeOdorNavigation.m: BASE_CLASS
 	- Trial[] (Trial)
 	
-### ./Trial
+### Trial.m
 Trial.m -> (ETHAcc_File, Camera_File)
 	- Name
 	- SubjectID
@@ -18,19 +18,19 @@ Trial.m -> (ETHAcc_File, Camera_File)
 
 ## ./Hardware/
 
-### Accelerometer
+### Accelerometer.m
 
 Accelerometer.m -> (Acc_Frame_Data)
 	- X
 	- Y
 	- Z
 	
-### ETH_Sensor
+### ETH_Sensor.m
 
 ETH_Sensor.m -> (ETH_Frame_Data)
 	- Voltage
 	
-### Camera
+### Camera.m
 	
 Camera.m -> (Camera_Frame_Data)
 	- Nose (Coords)
@@ -43,7 +43,7 @@ Camera.m -> (Camera_Frame_Data)
 
 ## ./Odor-Arena/
 
-### Arena
+### Arena.m
 
 Arena.m -> (Arena_Data)
 	- TopLeft (Coords)
@@ -52,7 +52,7 @@ Arena.m -> (Arena_Data)
 	- BottomRight (Coords)
 	- Port (Coords)
 	
-### CameraFrame
+### CameraFrame.m
 
 CameraFrame.m -> (Index, ETH_Data, Acc_Data, Camera_Data)
 	- Index
@@ -60,7 +60,7 @@ CameraFrame.m -> (Index, ETH_Data, Acc_Data, Camera_Data)
 	- Accelerometer[] (Accelerometer)
 	- Camera (Camera)
 
-### Coords
+### Coords.m
 
 Coords.m -> (X, Y, Likelihood)
 	- X

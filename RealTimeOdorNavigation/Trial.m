@@ -50,51 +50,84 @@ classdef Trial
         end
         
         %% Get Methods
-        function result = GetETHData(input, inc_time)
-            voltage = zeros(size(input.EthData));
-            import ETH_Sensor
+        function out1 = GetETHData(in1, inc_time)
+            voltage = zeros(size(in1.EthData));
             if inc_time
-                for i = 1:length(input.EthData)
-                    time = zeros(size(input.EthData));
-                    [voltage(i), time(i)] = input.EthData(i).GetETHVoltageWithTime();
+                for i = 1:length(in1.EthData)
+                    time_data = zeros(size(in1.EthData));
+                    [voltage(i), time_data(i)] = in1.EthData(i).GetETHVoltageWithTime();
                 end
-                result = [voltage, time];
+                out1 = [voltage, time_data];
             else
-                for i = 1:length(input.EthData)
-                    [voltage(i)] = input.EthData(i).GetETHReading();
+                for i = 1:length(in1.EthData)
+                    [voltage(i)] = in1.EthData(i).GetETHReading();
                 end
-                result = voltage;
+                out1 = voltage;
             end
         end
         
-        function result = GetAccelerometerData(input, inc_time)
-            import Accelerometer
-            x = zeros(size(input.AccData));
-            y = zeros(size(input.AccData));
-            z = zeros(size(input.AccData));
+        function out1 = GetAccelerometerData(in1, inc_time)
+            x = zeros(size(in1.AccData));
+            y = zeros(size(in1.AccData));
+            z = zeros(size(in1.AccData));
             if inc_time
-                for i = 1:length(input.AccData)
-                    time = zeros(size(input.AccData));
-                    [x(i), y(i), z(i), time(i)] = input.AccData(i).GetAccReadingWithTime();
+                for i = 1:length(in1.AccData)
+                    time = zeros(size(in1.AccData));
+                    [x(i), y(i), z(i), time(i)] = in1.AccData(i).GetAccReadingWithTime();
                 end
-                result = [x, y, z, time];
+                out1 = [x, y, z, time];
             else
-                for i = 1:length(input.AccData)
-                    [x(i), y(i), z(i)] = input.AccData(i).GetAccReading();
+                for i = 1:length(in1.AccData)
+                    [x(i), y(i), z(i)] = in1.AccData(i).GetAccReading();
                 end
-                result = [x, y, z];
+                out1 = [x, y, z];
             end
         end
         
-        function result = GetFrameData(input)
-            import CameraFrame
-            index = zeros(size(input.PositionData));
-            timestamp = zeros(size(input.PositionData));
-            coords = zeros(size(input.PositionData));
-            for i = 1:size(input.PositionData)
-                [index(i), timestamp(i), coords(i)] = input.PositionData(i).GetDataForFrame();
+        function out1 = GetAllFrameData(in1)
+            index_data = zeros(length(in1.PositionData), 0);
+            time_data = zeros(length(in1.PositionData), 0);
+            coords_data = zeros(7, 3, 0);
+            for i = 1:length(in1.PositionData)
+                temp = in1.PositionData(i).GetDataForFrame();
+                coords_data(:,:,i) = temp.coords;
+                index_data(i) = temp.index;
+                time_data(i) = temp.time;
             end
-            result = [index, timestamp, coords];
+            out1.index_data = index_data;
+            out1.time_data = time_data;
+            out1.coords_data = coords_data;
+        end
+        
+        function out1 = GetFrameCoords(trial_in, frame_num, lh, port)
+            if nargin == 2
+                columns_in = 2;
+                rows_in = 6;
+                lh = false;
+                port = false;
+            elseif nargin == 3
+                if lh
+                    columns_in = 3;
+                else
+                    columns_in = 2;
+                end
+                rows_in = 6;
+            elseif nargin == 4
+                if lh
+                    columns_in = 3;
+                else
+                    columns_in = 2;
+                end
+                if port
+                    rows_in = 7;
+                else
+                    rows_in = 6;
+                end
+            end
+            out1 = zeros(rows_in, columns_in, length(frame_num));
+            for i = 1:length(frame_num)
+                out1(:,:,i) = trial_in.PositionData(frame_num(i)).GetCoordinates(lh, port);
+            end
         end
     end
 end

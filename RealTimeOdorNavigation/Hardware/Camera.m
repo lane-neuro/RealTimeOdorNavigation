@@ -23,57 +23,70 @@ classdef Camera
         end
         
         %% Integration Get Method
-        function [animal] = GetAllPoints(input, inc_likelihood, inc_port)
-            animal(1) = input.GetNose(inc_likelihood);
-            animal(2) = input.GetLeftEar(inc_likelihood);
-            animal(3) = input.GetRightEar(inc_likelihood);
-            animal(4) = input.GetNeck(inc_likelihood);
-            animal(5) = input.GetBody(inc_likelihood);
-            animal(6) = input.GetTailbase(inc_likelihood);
+        function output = GetAllPoints(input, inc_likelihood, inc_port)
             if inc_port
-                animal(7) = input.GetPort(inc_likelihood);
+                x = zeros(0,7);
+                y = zeros(0,7);
+                [x(7), y(7)] = input.GetPort();
+            else
+                x = zeros(0,6);
+                y = zeros(0,6);
+            end
+            [x(1), y(1)] = input.GetNose();
+            [x(2), y(2)] = input.GetLeftEar();
+            [x(3), y(3)] = input.GetRightEar();
+            [x(4), y(4)] = input.GetNeck();
+            [x(5), y(5)] = input.GetBody();
+            [x(6), y(6)] = input.GetTailbase();
+            output = [x' y'];
+            if inc_likelihood
+                lh = input.GetAllLikelihoods(inc_port);
+                output = [x' y' lh'];
             end
         end
         
-        function [likelihoods] = GetAllLikelihoods(input, inc_port)
+        function likelihoods = GetAllLikelihoods(input, inc_port)            
+            if inc_port
+                likelihoods = zeros(0,7);
+                likelihoods(7) = input.Port.GetLikelihood();
+            else
+                likelihoods = zeros(0,6);
+            end
             likelihoods(1) = input.Nose.GetLikelihood();
             likelihoods(2) = input.LeftEar.GetLikelihood();
             likelihoods(3) = input.RightEar.GetLikelihood();
             likelihoods(4) = input.Neck.GetLikelihood();
             likelihoods(5) = input.Body.GetLikelihood();
             likelihoods(6) = input.Tailbase.GetLikelihood();
-            if inc_port
-                likelihoods(7) = input.Port.GetLikelihood();
-            end
         end
         
         %% Part Get Methods
-        function nose = GetNose(input, lh)
-            nose = input.Nose.GetCoord(lh);
+        function [x, y, lh] = GetNose(input)
+            [x, y, lh] = input.Nose.GetCoord();
         end
         
-        function l_ear = GetLeftEar(input, lh)
-            l_ear = input.LeftEar.GetCoord(lh);
+        function [x, y, lh] = GetLeftEar(input)
+            [x, y, lh] = input.LeftEar.GetCoord();
         end
         
-        function r_ear = GetRightEar(input, lh)
-            r_ear = input.RightEar.GetCoord(lh);
+        function [x, y, lh] = GetRightEar(input)
+            [x, y, lh] = input.RightEar.GetCoord();
         end
         
-        function neck = GetNeck(input, lh)
-            neck = input.Neck.GetCoord(lh);
+        function [x, y, lh] = GetNeck(input)
+            [x, y, lh] = input.Neck.GetCoord();
         end
         
-        function body = GetBody(input, lh)
-            body = input.Body.GetCoord(lh);
+        function [x, y, lh] = GetBody(input)
+            [x, y, lh] = input.Body.GetCoord();
         end
         
-        function tailbase = GetTailbase(input, lh)
-            tailbase = input.Tailbase.GetCoord(lh);
+        function [x, y, lh] = GetTailbase(input)
+            [x, y, lh] = input.Tailbase.GetCoord();
         end
         
-        function port = GetPort(input, lh)
-            port = input.Port.GetCoord(lh);
+        function [x, y, lh] = GetPort(input)
+            [x, y, lh] = input.Port.GetCoord();
         end
     end
 end

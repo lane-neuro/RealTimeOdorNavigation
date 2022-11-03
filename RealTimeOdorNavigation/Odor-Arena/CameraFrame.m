@@ -1,35 +1,35 @@
 classdef CameraFrame
     properties
-        Index uint32
-        Timestamp uint32
+        Cam_Index uint32
+        Cam_Timestamp uint32 = 0
         CameraData Camera
     end
     methods
-        function obj = CameraFrame(index, cameradata)
+        function obj = CameraFrame(in1, cameradata)
             if nargin == 2
                 import Camera
-                obj.Index = index;
+                obj.Cam_Index = in1;
                 obj.CameraData = Camera(cameradata);
             end
         end
         
         %% Get Methods
-        function [index, timestamp, coords] = GetDataForFrame(input)
-            index = input.GetFrameIndex();
-            timestamp = input.GetFrameTimestamp();
-            coords = input.GetCoordinatesForFrame(true);
+        function out1 = GetDataForFrame(in1)
+            out1.index = in1.GetFrameIndex();
+            out1.time = in1.GetFrameTimestamp();
+            out1.coords = in1.GetCoordinates(true, true);
         end
         
-        function output = GetCoordinatesForFrame(input, inc_likelihood)
-            output = input.CameraData.GetAllPoints(inc_likelihood, true);
+        function out1 = GetCoordinates(in1, inc_likelihood, inc_port)
+            out1 = in1.CameraData.GetAllPoints(inc_likelihood, inc_port);
         end
         
-        function index = GetFrameIndex(input)
-            index = input.Index;
+        function out1 = GetFrameIndex(in1)
+            out1 = in1.Cam_Index;
         end
         
-        function timestamp = GetFrameTimestamp(input)
-            timestamp = input.Timestamp;
+        function out1 = GetFrameTimestamp(in1)
+            out1 = in1.Cam_Timestamp;
         end
         
     end

@@ -1,6 +1,5 @@
 clear all; close all; clc
 
-%% CSV data collection %%
 cd('D:\2022TrialData')
 
 [file, ~] = uigetfile('*.csv;*.dat', 'MultiSelect', 'on');

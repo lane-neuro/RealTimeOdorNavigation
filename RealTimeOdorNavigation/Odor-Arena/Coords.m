@@ -20,20 +20,12 @@ classdef Coords
             end
         end
         
-        function x = GetX(input, lh)
-            if lh && ~input.isStatic
-                x = [input.X, input.GetLikelihood()];
-            else
-                x = input.X;
-            end
+        function x = GetX(input)
+            x = input.X;
         end
         
-        function y = GetY(input, lh)
-            if lh && ~input.isStatic
-                y = [input.Y, input.GetLikelihood()];
-            else
-                y = input.Y;
-            end
+        function y = GetY(input)
+            y = input.Y;
         end
         
         function likelihood = GetLikelihood(input)
@@ -44,12 +36,10 @@ classdef Coords
             end
         end
         
-        function [output] = GetCoord(input, lh)
-            output(1) = input.GetX();
-            output(2) = input.GetY();
-            if lh
-                output(3) = input.GetLikelihood();
-            end
+        function [x, y, likelihood] = GetCoord(input)
+            x = input.GetX();
+            y = input.GetY();
+            likelihood = input.GetLikelihood();
         end
     end
 end

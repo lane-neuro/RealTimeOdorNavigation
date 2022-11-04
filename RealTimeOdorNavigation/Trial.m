@@ -50,11 +50,11 @@ classdef Trial
         end
         
         %% Get Methods
-        function out1 = GetETHData(in1, inc_time)
-            voltage = zeros(size(in1.EthData));
+        function out1 = GetAllETHData(in1, inc_time)
+            voltage = zeros(size(in1.EthData), 0);
             if inc_time
                 for i = 1:length(in1.EthData)
-                    time_data = zeros(size(in1.EthData));
+                    time_data = zeros(size(in1.EthData), 0);
                     [voltage(i), time_data(i)] = in1.EthData(i).GetETHVoltageWithTime();
                 end
                 out1 = [voltage, time_data];
@@ -66,13 +66,13 @@ classdef Trial
             end
         end
         
-        function out1 = GetAccelerometerData(in1, inc_time)
-            x = zeros(size(in1.AccData));
-            y = zeros(size(in1.AccData));
-            z = zeros(size(in1.AccData));
+        function out1 = GetAllAccelerometerData(in1, inc_time)
+            x = zeros(size(in1.AccData), 0);
+            y = zeros(size(in1.AccData), 0);
+            z = zeros(size(in1.AccData), 0);
             if inc_time
                 for i = 1:length(in1.AccData)
-                    time = zeros(size(in1.AccData));
+                    time = zeros(size(in1.AccData), 0);
                     [x(i), y(i), z(i), time(i)] = in1.AccData(i).GetAccReadingWithTime();
                 end
                 out1 = [x, y, z, time];

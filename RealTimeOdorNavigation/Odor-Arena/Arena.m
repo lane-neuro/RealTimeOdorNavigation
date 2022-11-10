@@ -17,5 +17,17 @@ classdef Arena
                 obj.Port = Coords(arena_data(9), arena_data(10));
             end
         end
+        
+        function out1 = GetArenaCoordinates(in1)
+            x = zeros(0,5);
+            y = zeros(0,5);
+            
+            [x(1), y(1)] = in1.TopLeft.GetCoord();
+            [x(2), y(2)] = in1.TopRight.GetCoord();
+            [x(3), y(3)] = in1.BottomLeft.GetCoord();
+            [x(4), y(4)] = in1.BottomRight.GetCoord();
+            [x(5), y(5)] = in1.Port.GetCoord();
+            out1 = [x' y'];
+        end
     end
 end

@@ -3,7 +3,7 @@ classdef Accelerometer
         X {mustBeNumeric}
         Y {mustBeNumeric}
         Z {mustBeNumeric}
-        Time uint32
+        DAQ_Time uint32
         CameraTime uint32
     end
     methods
@@ -12,24 +12,24 @@ classdef Accelerometer
                 obj.X = acc_frame_data(1);
                 obj.Y = acc_frame_data(2);
                 obj.Z = acc_frame_data(3);
-                obj.Time = time;
+                obj.DAQ_Time = time;
                 obj.CameraTime = c_time;
             end
         end
         
-        function [x, y, z] = GetAccReading(input)
-            x = input.X;
-            y = input.Y;
-            z = input.Z;
+        function [x, y, z] = GetAccReading(in1)
+            x = in1.X;
+            y = in1.Y;
+            z = in1.Z;
         end
         
-        function time = GetAccTime(input)
-            time = input.Time;
+        function time = GetAccTime(in1)
+            time = in1.DAQ_Time;
         end
         
-        function [reading, time] = GetAccReadingWithTime(input)
-            reading = input.GetAccReading();
-            time = input.GetAccTime();
+        function [x, y, z, time] = GetAccReadingWithTime(in1)
+            [x, y, z] = in1.GetAccReading();
+            time = in1.GetAccTime();
         end
     end
 end

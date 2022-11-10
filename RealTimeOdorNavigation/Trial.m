@@ -1,9 +1,9 @@
 classdef Trial
     properties
-        Name char
-        SubjectID uint16
+        TrialDate datetime
         TrialNum uint16
-        Date datetime
+        SubjectID uint16
+        Name char
         PositionData CameraFrame
         ArenaData Arena
         EthData ETH_Sensor
@@ -14,6 +14,8 @@ classdef Trial
             import CameraFrame
             if nargin == 2
                 obj.Name = camera_file.name(1:length(camera_file.name)-4);
+                obj.TrialDate = datetime(char(extractBefore(camera_file.name, '-M')),'InputFormat','M-d-u-h-m a');
+                
                 subStr = extractBetween(camera_file.name, "CB", "_");
                 obj.SubjectID = str2num(char(extractBefore(subStr, '-')));
                 obj.TrialNum = str2num(char(extractAfter(subStr, '-')));
@@ -51,55 +53,69 @@ classdef Trial
         
         %% Get Methods
         function out1 = GetAllETHData(in1, inc_time)
-            voltage = zeros(size(in1.EthData), 0);
+            voltage = zeros(length(in1.EthData), 0);
             if inc_time
+                time_data = zeros(length(in1.EthData), 0);
                 for i = 1:length(in1.EthData)
-                    time_data = zeros(size(in1.EthData), 0);
                     [voltage(i), time_data(i)] = in1.EthData(i).GetETHVoltageWithTime();
                 end
-                out1 = [voltage, time_data];
+                out1 = [voltage' time_data'];
             else
                 for i = 1:length(in1.EthData)
                     [voltage(i)] = in1.EthData(i).GetETHReading();
                 end
-                out1 = voltage;
+                out1 = voltage';
             end
         end
         
         function out1 = GetAllAccelerometerData(in1, inc_time)
-            x = zeros(size(in1.AccData), 0);
-            y = zeros(size(in1.AccData), 0);
-            z = zeros(size(in1.AccData), 0);
+            x = zeros(length(in1.AccData), 0);
+            y = zeros(length(in1.AccData), 0);
+            z = zeros(length(in1.AccData), 0);
             if inc_time
+                time = zeros(length(in1.AccData), 0);
                 for i = 1:length(in1.AccData)
-                    time = zeros(size(in1.AccData), 0);
                     [x(i), y(i), z(i), time(i)] = in1.AccData(i).GetAccReadingWithTime();
                 end
-                out1 = [x, y, z, time];
+                out1 = [x' y' z' time'];
             else
                 for i = 1:length(in1.AccData)
                     [x(i), y(i), z(i)] = in1.AccData(i).GetAccReading();
                 end
-                out1 = [x, y, z];
+                out1 = [x' y' z'];
             end
         end
         
-        function out1 = GetAllFrameData(in1)
+        function out1 = GetAllFrameData(in1, exc_valid)
             index_data = zeros(length(in1.PositionData), 0);
-            time_data = zeros(length(in1.PositionData), 0);
+%            time_data = zeros(length(in1.PositionData), 0);
+            valid_flag = zeros(length(in1.PositionData), 0);
             coords_data = zeros(7, 3, 0);
+            currentIndex = 0;
             for i = 1:length(in1.PositionData)
-                temp = in1.PositionData(i).GetDataForFrame();
-                coords_data(:,:,i) = temp.coords;
-                index_data(i) = temp.index;
-                time_data(i) = temp.time;
+                if exc_valid && ~in1.PositionData(i).GetValidity()
+                    continue;
+                end
+                currentIndex = currentIndex + 1;
+                temp = in1.PositionData(i).GetFrameData();
+                coords_data(:,:,currentIndex) = temp.Coordinates;
+                index_data(currentIndex) = temp.Index;
+%                time_data(i) = temp.Time;
+                valid_flag(currentIndex) = temp.Valid;
             end
-            out1.index_data = index_data;
-            out1.time_data = time_data;
-            out1.coords_data = coords_data;
+            if exc_valid
+                index_data = nonzeros(index_data);
+%                time_data = nonzeros(time_data);
+                coords_data = coords_data(:,:,1:currentIndex);
+                valid_flag = nonzeros(valid_flag);
+            end
+            out1.FrameIndex = index_data;
+%            out1.time_data = time_data';
+            out1.FrameCoordinates = coords_data;
+            out1.FrameValidity = valid_flag;
         end
         
-        function out1 = GetFrameCoords(trial_in, frame_num, lh, port)
+        function out1 = GetCoordsForFrames(trial_in, frame_num, lh, port)
             if nargin == 2
                 columns_in = 2;
                 rows_in = 6;
@@ -126,8 +142,21 @@ classdef Trial
             end
             out1 = zeros(rows_in, columns_in, length(frame_num));
             for i = 1:length(frame_num)
-                out1(:,:,i) = trial_in.PositionData(frame_num(i)).GetCoordinates(lh, port);
+                out1(:,:,i) = trial_in.PositionData(frame_num(i)).GetFrameCoordinates(lh, port);
             end
+        end
+        
+        function out1 = GetDataStruct(in1, exc_invalid)
+            out1.Date = in1.TrialDate;
+            out1.SubjectID = in1.SubjectID;
+%            out1.TrialNum = in1.TrialNum;
+%            out1.Name = in1.Name;
+            out1.PositionData = in1.GetAllFrameData(exc_invalid);
+            out1.ArenaData = in1.ArenaData.GetArenaCoordinates();
+            out1.EthData = in1.GetAllETHData(true);
+            out1.AccData = in1.GetAllAccelerometerData(true);
         end
     end
 end
+
+%#ok<*ST2NM>

@@ -10,6 +10,10 @@ clear file i
 
 import RealTimeOdorNavigation
 data = RealTimeOdorNavigation(files);
+clear files
+
+test = data.GetDataStructForTrials(1:2);
+test = data.GetValidFramesForTrials(1:2);
 
 %%
 %{   

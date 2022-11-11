@@ -1,6 +1,6 @@
 classdef CameraFrame
     properties (Constant)
-        Tolerance = 0.95
+        Tolerance = 0.999
     end
     properties
         Cam_Index uint32

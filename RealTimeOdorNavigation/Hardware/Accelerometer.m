@@ -17,19 +17,17 @@ classdef Accelerometer
             end
         end
         
-        function [x, y, z] = GetAccReading(in1)
-            x = in1.X;
-            y = in1.Y;
-            z = in1.Z;
+        function [x, y, z] = getAccReading(this)
+            x = this.X;
+            y = this.Y;
+            z = this.Z;
         end
         
-        function time = GetAccTime(in1)
-            time = in1.DAQ_Time;
-        end
+        function time = getAccTime(this), time = this.DAQ_Time; end
         
-        function [x, y, z, time] = GetAccReadingWithTime(in1)
-            [x, y, z] = in1.GetAccReading();
-            time = in1.GetAccTime();
+        function [x, y, z, time] = getAccReadingWithTime(this)
+            [x, y, z] = this.getAccReading();
+            time = this.getAccTime();
         end
     end
 end

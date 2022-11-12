@@ -1,6 +1,6 @@
 classdef CameraFrame
     properties (Constant)
-        Tolerance = 0.999
+        TOLERANCE = 0.95
     end
     properties
         Cam_Index uint32
@@ -9,45 +9,34 @@ classdef CameraFrame
         isValid logical
     end
     methods
-        function obj = CameraFrame(in1, cameradata)
+        function obj = CameraFrame(this, cameradata)
             if nargin == 2
                 import Camera
-                obj.Cam_Index = in1;
+                obj.Cam_Index = this;
                 obj.CameraData = Camera(cameradata);
                 obj.isValid = true;
-                likelihoods = obj.CameraData.GetAllLikelihoods(false);
+                likelihoods = obj.CameraData.getAllLikelihoods(false);
                 for z = 1:length(likelihoods)
-                    if(likelihoods(z) < CameraFrame.Tolerance)
-                        obj.isValid = false;
-                        break;
-                    end
+                    if(likelihoods(z) < CameraFrame.TOLERANCE), obj.isValid = false; break; end
                 end
             end
         end
         
         %% Get Methods
-        function out1 = GetFrameData(in1)
-            out1.Index = in1.GetFrameIndex();
-            out1.Time = in1.GetFrameTimestamp();
-            out1.Coordinates = in1.GetFrameCoordinates(true, true);
-            out1.Valid = in1.isValid;
+        function out1 = getFrameData(this)
+            out1.Index = this.getFrameIndex();
+            out1.Time = this.getFrameTimestamp();
+            out1.Coordinates = this.getFrameCoordinates(true, true);
+            out1.Valid = this.isValid;
         end
         
-        function out1 = GetFrameCoordinates(in1, inc_likelihood, inc_port)
-            out1 = in1.CameraData.GetAllPoints(inc_likelihood, inc_port);
+        function out1 = getFrameCoordinates(this, inc_likelihood, inc_port)
+            out1 = this.CameraData.getAllPoints(inc_likelihood, inc_port);
         end
         
-        function out1 = GetFrameIndex(in1)
-            out1 = in1.Cam_Index;
-        end
-        
-        function out1 = GetFrameTimestamp(in1)
-            out1 = in1.Cam_Timestamp;
-        end
-        
-        function out1 = GetValidity(in1)
-            out1 = in1.isValid;
-        end
+        function out1 = getFrameIndex(this), out1 = this.Cam_Index; end
+        function out1 = getFrameTimestamp(this), out1 = this.Cam_Timestamp; end
+        function out1 = getValidity(this), out1 = this.isValid; end
         
     end
 end

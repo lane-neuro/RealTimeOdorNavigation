@@ -7,23 +7,16 @@ classdef RealTimeOdorNavigation
             import Trial
             if nargin == 1
                 fprintf('Number of Trials Selected: %i\n', length(data_files)/2);
-                
-                for i = 1:length(data_files)/2
-                    obj.TrialDataset(i) = Trial(data_files((i*2) - 1), data_files(i*2));
-                end
+                for i = 1:length(data_files)/2, obj.TrialDataset(i) = Trial(data_files((i*2) - 1), data_files(i*2)); end
             end
         end
         
-        function out1 = GetDataStructForTrials(this, trial_num)
-            for i = 1:length(trial_num)
-                out1(i) = this.TrialDataset(trial_num(i)).GetDataStruct(false);
-            end
+        function out1 = getDataStructForTrials(this, trials_in)
+            for i = 1:length(trials_in), out1(i) = this.TrialDataset(trials_in(i)).getDataStruct(false); end
         end
         
-        function out1 = GetValidFramesForTrials(this, trial_num)
-            for i = 1:length(trial_num)
-                out1(i) = this.TrialDataset(trial_num(i)).GetDataStruct(true);
-            end
+        function out1 = findValidFramesForTrials(this, trials_in)
+            for i = 1:length(trials_in), out1(i) = this.TrialDataset(trials_in(i)).getDataStruct(true); end
         end
     end
 end

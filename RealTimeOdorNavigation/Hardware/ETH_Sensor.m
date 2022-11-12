@@ -14,17 +14,12 @@ classdef ETH_Sensor
             end
         end
         
-        function voltage = GetETHReading(in1)
-            voltage = in1.Voltage;
-        end
+        function voltage = getEthReading(this), voltage = this.Voltage; end
+        function time = getEthTime(this), time = this.DAQ_Time; end
         
-        function time = GetETHTime(in1)
-            time = in1.DAQ_Time;
-        end
-        
-        function [voltage, time] = GetETHVoltageWithTime(in1)
-            voltage = in1.GetETHReading();
-            time = in1.GetETHTime();
+        function [voltage, time] = getEthVoltageWithTime(this)
+            voltage = this.getEthReading();
+            time = this.getEthTime();
         end
     end
 end

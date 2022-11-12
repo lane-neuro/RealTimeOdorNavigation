@@ -20,26 +20,17 @@ classdef Coords
             end
         end
         
-        function x = GetX(input)
-            x = input.X;
+        function x = getX(this), x = this.X; end
+        function y = getY(this), y = this.Y; end
+        
+        function likelihood = getLikelihood(this)
+            if this.isStatic, likelihood = 0; else, likelihood = this.Likelihood; end
         end
         
-        function y = GetY(input)
-            y = input.Y;
-        end
-        
-        function likelihood = GetLikelihood(input)
-            if input.isStatic
-                likelihood = 0;
-            else
-                likelihood = input.Likelihood;
-            end
-        end
-        
-        function [x, y, likelihood] = GetCoord(input)
-            x = input.GetX();
-            y = input.GetY();
-            likelihood = input.GetLikelihood();
+        function [x, y, likelihood] = getCoord(this)
+            x = this.getX();
+            y = this.getY();
+            likelihood = this.getLikelihood();
         end
     end
 end

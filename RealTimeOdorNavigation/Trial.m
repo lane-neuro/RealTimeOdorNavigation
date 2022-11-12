@@ -22,9 +22,9 @@ classdef Trial
                 clear subStr
                 
                 cameraData = csvread(camera_file.name, 3, 0);
-                for z = 1:length(cameraData) % camera data per frame
+                for z = 1:length(cameraData)
                     obj.PositionData(z) = CameraFrame(cameraData(z, 1)+1, cameraData(z, :));
-                end
+                end % camera data per frame
                 import Arena
                 obj.ArenaData = Arena([mode(cameraData(:, 23)) mode(cameraData(:,24)) mode(cameraData(:,26)) mode(cameraData(:,27)) mode(cameraData(:,29)) mode(cameraData(:,30)) mode(cameraData(:,32)) mode(cameraData(:,33)) mode(cameraData(:,20)) mode(cameraData(:,21))]);
                 clear cameraData
@@ -52,52 +52,46 @@ classdef Trial
         end
         
         %% Get Methods
-        function out1 = GetAllETHData(in1, inc_time)
-            voltage = zeros(length(in1.EthData), 0);
+        function out1 = getAllEthData(this, inc_time)
+            voltage = zeros(length(this.EthData), 0);
             if inc_time
-                time_data = zeros(length(in1.EthData), 0);
-                for i = 1:length(in1.EthData)
-                    [voltage(i), time_data(i)] = in1.EthData(i).GetETHVoltageWithTime();
+                time_data = zeros(length(this.EthData), 0);
+                for i = 1:length(this.EthData)
+                    [voltage(i), time_data(i)] = this.EthData(i).getEthVoltageWithTime();
                 end
                 out1 = [voltage' time_data'];
             else
-                for i = 1:length(in1.EthData)
-                    [voltage(i)] = in1.EthData(i).GetETHReading();
-                end
+                for i = 1:length(this.EthData), [voltage(i)] = this.EthData(i).getEthReading(); end
                 out1 = voltage';
             end
         end
         
-        function out1 = GetAllAccelerometerData(in1, inc_time)
-            x = zeros(length(in1.AccData), 0);
-            y = zeros(length(in1.AccData), 0);
-            z = zeros(length(in1.AccData), 0);
+        function out1 = getAllAccelerometerData(this, inc_time)
+            x = zeros(length(this.AccData), 0);
+            y = zeros(length(this.AccData), 0);
+            z = zeros(length(this.AccData), 0);
             if inc_time
-                time = zeros(length(in1.AccData), 0);
-                for i = 1:length(in1.AccData)
-                    [x(i), y(i), z(i), time(i)] = in1.AccData(i).GetAccReadingWithTime();
+                time = zeros(length(this.AccData), 0);
+                for i = 1:length(this.AccData)
+                    [x(i), y(i), z(i), time(i)] = this.AccData(i).getAccReadingWithTime();
                 end
                 out1 = [x' y' z' time'];
             else
-                for i = 1:length(in1.AccData)
-                    [x(i), y(i), z(i)] = in1.AccData(i).GetAccReading();
-                end
+                for i = 1:length(this.AccData), [x(i), y(i), z(i)] = this.AccData(i).getAccReading(); end
                 out1 = [x' y' z'];
             end
         end
         
-        function out1 = GetAllFrameData(in1, exc_valid)
-            index_data = zeros(length(in1.PositionData), 0);
+        function out1 = getAllFrameData(this, exc_valid)
+            index_data = zeros(length(this.PositionData), 0);
 %            time_data = zeros(length(in1.PositionData), 0);
-            valid_flag = zeros(length(in1.PositionData), 0);
+            valid_flag = zeros(length(this.PositionData), 0);
             coords_data = zeros(7, 3, 0);
             currentIndex = 0;
-            for i = 1:length(in1.PositionData)
-                if exc_valid && ~in1.PositionData(i).GetValidity()
-                    continue;
-                end
+            for i = 1:length(this.PositionData)
+                if exc_valid && ~this.PositionData(i).getValidity(), continue; end
                 currentIndex = currentIndex + 1;
-                temp = in1.PositionData(i).GetFrameData();
+                temp = this.PositionData(i).getFrameData();
                 coords_data(:,:,currentIndex) = temp.Coordinates;
                 index_data(currentIndex) = temp.Index;
 %                time_data(i) = temp.Time;
@@ -115,46 +109,34 @@ classdef Trial
             out1.FrameValidity = valid_flag;
         end
         
-        function out1 = GetCoordsForFrames(trial_in, frame_num, lh, port)
+        function out1 = getCoordsForFrames(trial_in, frame_num, lh, port)
             if nargin == 2
                 columns_in = 2;
                 rows_in = 6;
                 lh = false;
                 port = false;
             elseif nargin == 3
-                if lh
-                    columns_in = 3;
-                else
-                    columns_in = 2;
-                end
+                if lh, columns_in = 3; else, columns_in = 2; end
                 rows_in = 6;
             elseif nargin == 4
-                if lh
-                    columns_in = 3;
-                else
-                    columns_in = 2;
-                end
-                if port
-                    rows_in = 7;
-                else
-                    rows_in = 6;
-                end
+                if lh, columns_in = 3; else, columns_in = 2; end
+                if port, rows_in = 7; else, rows_in = 6; end
             end
             out1 = zeros(rows_in, columns_in, length(frame_num));
             for i = 1:length(frame_num)
-                out1(:,:,i) = trial_in.PositionData(frame_num(i)).GetFrameCoordinates(lh, port);
+                out1(:,:,i) = trial_in.PositionData(frame_num(i)).getFrameCoordinates(lh, port);
             end
         end
         
-        function out1 = GetDataStruct(in1, exc_invalid)
-            out1.Date = in1.TrialDate;
-            out1.SubjectID = in1.SubjectID;
-%            out1.TrialNum = in1.TrialNum;
-%            out1.Name = in1.Name;
-            out1.PositionData = in1.GetAllFrameData(exc_invalid);
-            out1.ArenaData = in1.ArenaData.GetArenaCoordinates();
-            out1.EthData = in1.GetAllETHData(true);
-            out1.AccData = in1.GetAllAccelerometerData(true);
+        function out1 = getDataStruct(this, exc_invalid)
+            out1.Date = this.TrialDate;
+            out1.SubjectID = this.SubjectID;
+%            out1.TrialNum = this.TrialNum;
+%            out1.Name = this.Name;
+            out1.PositionData = this.getAllFrameData(exc_invalid);
+            out1.ArenaData = this.ArenaData.getArenaCoordinates();
+            out1.EthData = this.getAllEthData(true);
+            out1.AccData = this.getAllAccelerometerData(true);
         end
     end
 end

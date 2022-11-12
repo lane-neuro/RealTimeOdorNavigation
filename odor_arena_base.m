@@ -3,17 +3,15 @@ clear all; close all; clc
 cd('D:\2022TrialData')
 
 [file, ~] = uigetfile('*.csv;*.dat', 'MultiSelect', 'on');
-for i = 1:length(file)
-    files(i) = dir(char(file(i)));
-end
+for i = 1:length(file), files(i) = dir(char(file(i))); end
 clear file i
 
 import RealTimeOdorNavigation
-data = RealTimeOdorNavigation(files);
+dataset = RealTimeOdorNavigation(files);
 clear files
 
-test = data.GetDataStructForTrials(1:2);
-test = data.GetValidFramesForTrials(1:2);
+test = dataset.getDataStructForTrials(1:2);
+test = dataset.findValidFramesForTrials(1:2);
 
 %%
 %{   

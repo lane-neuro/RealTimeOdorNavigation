@@ -1,8 +1,8 @@
 classdef Accelerometer
     properties
-        X {mustBeNumeric}
-        Y {mustBeNumeric}
-        Z {mustBeNumeric}
+        X double
+        Y double
+        Z double
         DAQ_Time uint32
         CameraTime uint32
     end

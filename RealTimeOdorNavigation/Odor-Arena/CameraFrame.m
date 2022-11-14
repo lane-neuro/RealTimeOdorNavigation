@@ -6,7 +6,7 @@ classdef CameraFrame
         Cam_Index uint32
         Cam_Timestamp uint32 = 0
         CameraData Camera
-        isValid logical
+        isValid logical = true
     end
     methods
         function obj = CameraFrame(this, cameradata)
@@ -14,7 +14,6 @@ classdef CameraFrame
                 import Camera
                 obj.Cam_Index = this;
                 obj.CameraData = Camera(cameradata);
-                obj.isValid = true;
                 likelihoods = obj.CameraData.getAllLikelihoods(false);
                 for z = 1:length(likelihoods)
                     if(likelihoods(z) < CameraFrame.TOLERANCE), obj.isValid = false; break; end
@@ -32,6 +31,12 @@ classdef CameraFrame
         
         function out1 = getFrameCoordinates(this, inc_likelihood, inc_port)
             out1 = this.CameraData.getAllPoints(inc_likelihood, inc_port);
+        end
+        
+        function [neckNose, bodyNeck, tailbaseBody] = getFrameAngles(this)
+            neckNose = this.CameraData.getNeckToNoseAngle();
+            bodyNeck = this.CameraData.getBodyToNeckAngle();
+            tailbaseBody = this.CameraData.getTailbaseToBodyAngle();
         end
         
         function out1 = getFrameIndex(this), out1 = this.Cam_Index; end

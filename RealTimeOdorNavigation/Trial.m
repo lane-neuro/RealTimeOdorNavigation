@@ -138,6 +138,16 @@ classdef Trial
             out1.EthData = this.getAllEthData(true);
             out1.AccData = this.getAllAccelerometerData(true);
         end
+        
+        function out1 = getAnglesForFrames(this, iFrames)
+            a = zeros(length(iFrames), 0);
+            b = zeros(length(iFrames), 0);
+            c = zeros(length(iFrames), 0);
+            for ii = 1:length(iFrames)
+                [a(ii), b(ii), c(ii)] = this.PositionData(iFrames(ii)).getFrameAngles();
+            end
+            out1 = [iFrames a' b' c'];
+        end
     end
 end
 

@@ -1,7 +1,6 @@
 clear all; close all; clc
 
 cd('D:\2022TrialData')
-
 [file, ~] = uigetfile('*.csv;*.dat', 'MultiSelect', 'on');
 for i = 1:length(file), files(i) = dir(char(file(i))); end
 clear file i
@@ -10,8 +9,16 @@ import RealTimeOdorNavigation
 dataset = RealTimeOdorNavigation(files);
 clear files
 
-test = dataset.getDataStructForTrials(1:2);
-test = dataset.findValidFramesForTrials(1:2);
+validFrames = dataset.findValidFramesForTrials(1);
+nFrames = length(validFrames.PositionData.FrameIndex);
+midFrame = round(nFrames / 2);
+startFrame = round(midFrame / 2);
+endFrame = midFrame + startFrame;
+frames = validFrames.PositionData.FrameIndex(startFrame:endFrame);
+nFrames = length(frames);
+frames = sort(randsample(frames(1:end),round(nFrames*0.05)));
+angles = dataset.TrialDataset(1).getAnglesForFrames(frames(1:end));
+
 
 %%
 %{   

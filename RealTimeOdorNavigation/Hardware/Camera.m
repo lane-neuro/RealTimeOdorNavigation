@@ -22,7 +22,7 @@ classdef Camera
             end
         end
         
-        %% Integration Get Method
+        %% Get Methods
         function out1 = getAllPoints(this, inc_likelihood, inc_port)
             if inc_port
                 x = zeros(0,7);
@@ -49,7 +49,9 @@ classdef Camera
             if inc_port
                 likelihoods = zeros(0,7);
                 likelihoods(7) = this.Port.getLikelihood();
-            else, likelihoods = zeros(0,6); end
+            else
+                likelihoods = zeros(0,6); 
+            end
             likelihoods(1) = this.Nose.getLikelihood();
             likelihoods(2) = this.LeftEar.getLikelihood();
             likelihoods(3) = this.RightEar.getLikelihood();
@@ -66,5 +68,27 @@ classdef Camera
         function [x, y, lh] = getBody(this), [x, y, lh] = this.Body.getCoord(); end        
         function [x, y, lh] = getTailbase(this), [x, y, lh] = this.Tailbase.getCoord(); end
         function [x, y, lh] = getPort(this), [x, y, lh] = this.Port.getCoord(); end
+        
+        %% Calculation Get Methods
+        function ang = getNeckToNoseAngle(this)
+            ang = this.calcAngleBetweenCoords(this.Neck, this.Nose);
+        end
+        
+        function ang = getBodyToNeckAngle(this)
+            ang = this.calcAngleBetweenCoords(this.Body, this.Neck);
+        end
+        
+        function ang = getTailbaseToBodyAngle(this)
+            ang = this.calcAngleBetweenCoords(this.Tailbase, this.Body);            
+        end
+        
+        %% Angle Calculations
+        function ang = calcAngleBetweenCoords(~, p1, p2)
+            xDiff = p2.getX() - p1.getX();
+            yDiff = p2.getY() - p1.getY();
+            
+            ang = atan2d(yDiff, xDiff);
+            if ang < 0, ang = ang + 360; end
+        end
     end
 end

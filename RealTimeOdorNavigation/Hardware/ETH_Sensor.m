@@ -1,6 +1,6 @@
 classdef ETH_Sensor
     properties
-        Voltage {mustBeNumeric}
+        Voltage double
         DAQ_Time uint32
         Camera_Time uint32
         Frame_Index uint32

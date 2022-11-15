@@ -10,15 +10,19 @@ dataset = RealTimeOdorNavigation(files);
 clear files
 
 validFrames = dataset.findValidFramesForTrials(1);
-nFrames = length(validFrames.PositionData.FrameIndex);
-midFrame = round(nFrames / 2);
-startFrame = round(midFrame / 2);
-endFrame = midFrame + startFrame;
-frames = validFrames.PositionData.FrameIndex(startFrame:endFrame);
-nFrames = length(frames);
-frames = sort(randsample(frames(1:end),round(nFrames*0.05)));
+frames = validFrames.PositionData.FrameIndex(round(length(validFrames.PositionData.FrameIndex)*0.25):round(length(validFrames.PositionData.FrameIndex)*0.75));
+frames = sort(randsample(frames(1:end),round(length(frames)*0.05)));
 angles = dataset.TrialDataset(1).getAnglesForFrames(frames(1:end));
+vid_images = dataset.getImagesForFramesInTrial(1, 5274);
 
+%imcrop([9,573], [79,335], vid_images(1).Image); %[dataset.X, dataset.Y, dataset.WIDTH - 1, dataset.HEIGHT - 1]
+vid_images(1).Image = vid_images(1).Image(79:335, 9:573, :);
+imshow(vid_images(1).Image);
+hold on
+title(vid_images(1).Frame);
+coords = dataset.TrialDataset(1).getCoordsForFrames(vid_images(1).Frame, false, true);
+plot([coords(1,1), coords(4,1)], [coords(1,2), coords(4,2)], '-o');
+plot([coords(4,1), coords(5,1)], [coords(4,2), coords(5,2)], '-o');
 
 %%
 %{   

@@ -4,6 +4,7 @@ classdef Trial
         TrialNum uint16
         SubjectID uint16
         Name char
+        VideoPath char
         PositionData CameraFrame
         ArenaData Arena
         EthData ETH_Sensor
@@ -14,6 +15,7 @@ classdef Trial
             import CameraFrame
             if nargin == 2
                 obj.Name = camera_file.name(1:length(camera_file.name)-4);
+                obj.VideoPath = strcat(extractBefore(obj.Name, '_reencoded'), '.avi');
                 obj.TrialDate = datetime(char(extractBefore(camera_file.name, '-M')),'InputFormat','M-d-u-h-m a');
                 
                 subStr = extractBetween(camera_file.name, "CB", "_");
@@ -131,6 +133,7 @@ classdef Trial
         function out1 = getDataStruct(this, exc_invalid)
             out1.Date = this.TrialDate;
             out1.SubjectID = this.SubjectID;
+            out1.VideoPath = this.VideoPath;
 %            out1.TrialNum = this.TrialNum;
 %            out1.Name = this.Name;
             out1.PositionData = this.getAllFrameData(exc_invalid);
@@ -148,6 +151,18 @@ classdef Trial
             end
             out1 = [iFrames a' b' c'];
         end
+        
+        function imgs = getImagesForFrames(this, iFrames)
+            cd('videos');
+            video = read(VideoReader(this.VideoPath));
+            imgs = zeros(length(iFrames), 0);
+            for ii = 1:length(iFrames)
+                imgs(ii).Frame = iFrames(ii);
+                imgs(ii).Image = video(:, :, :, iFrames(ii));
+            end
+            cd ..
+        end
+        
     end
 end
 

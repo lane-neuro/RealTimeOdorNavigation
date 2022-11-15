@@ -1,4 +1,10 @@
 classdef RealTimeOdorNavigation
+    properties (Constant)
+        X = 9
+        Y = 79
+        WIDTH = 564
+        HEIGHT = 256
+    end
     properties
         TrialDataset Trial
     end
@@ -17,6 +23,10 @@ classdef RealTimeOdorNavigation
         
         function out1 = findValidFramesForTrials(this, trials_in)
             for i = 1:length(trials_in), out1(i) = this.TrialDataset(trials_in(i)).getDataStruct(true); end
+        end
+        
+        function imgs = getImagesForFramesInTrial(this, trial_in, iframes)
+            imgs = this.TrialDataset(trial_in).getImagesForFrames(iframes);
         end
     end
 end

@@ -5,15 +5,16 @@ cd('D:\2022TrialData')
 for i = 1:length(file), files(i) = dir(char(file(i))); end
 clear file i
 
+
 import RealTimeOdorNavigation
 dataset = RealTimeOdorNavigation(files);
 clear files
-
+%%
 validFrames = dataset.findValidFramesForTrials(1);
 frames = validFrames.PositionData.FrameIndex(round(length(validFrames.PositionData.FrameIndex)*0.25):round(length(validFrames.PositionData.FrameIndex)*0.75));
 frames = sort(randsample(frames(1:end),round(length(frames)*0.05)));
 angles = dataset.TrialDataset(1).getAnglesForFrames(frames(1:end));
-vid_images = dataset.getImagesForFramesInTrial(1, 5274);
+vid_images = dataset.getImagesForFramesInTrial(1, frames(1:3));
 
 %imcrop([9,573], [79,335], vid_images(1).Image); %[dataset.X, dataset.Y, dataset.WIDTH - 1, dataset.HEIGHT - 1]
 vid_images(1).Image = vid_images(1).Image(79:335, 9:573, :);

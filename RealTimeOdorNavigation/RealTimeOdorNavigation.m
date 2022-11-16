@@ -17,6 +17,7 @@ classdef RealTimeOdorNavigation
             end
         end
         
+        %% Get & Find Methods
         function out1 = getDataStructForTrials(this, trials_in)
             for i = 1:length(trials_in), out1(i) = this.TrialDataset(trials_in(i)).getDataStruct(false); end
         end

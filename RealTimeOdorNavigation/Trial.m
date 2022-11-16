@@ -1,5 +1,5 @@
 classdef Trial
-    properties (Constant)
+    properties (Constant, Hidden = true)
         ConfigPrefix = 'config_'
         PositionPrefix = 'pos_'
         ArenaPrefix = 'arena_'
@@ -14,9 +14,13 @@ classdef Trial
         Name char
         VideoPath char
         PositionData CameraFrame
+        PositionFile
         ArenaData Arena
+        ArenaFile
         EthData ETH_Sensor
+        EthFile
         AccData Accelerometer
+        AccFile
     end
     methods
         function obj = Trial(ethacc_file, camera_file)
@@ -32,12 +36,12 @@ classdef Trial
                 obj.TrialNum = str2num(char(extractAfter(subStr, '-')));
                 clear subStr
                 
-                [mat_pos, arena_pos] = loadPositionData(obj, obj.Name, obj.Name, camera_file.name);
-                obj.PositionData = mat_pos.PositionData;
-                obj.ArenaData = arena_pos.ArenaData;
-                [mat_eth, mat_acc] = loadEthAccData(obj, obj.Name, obj.Name, ethacc_file.name);
-                obj.EthData = mat_eth.EthData;
-                obj.AccData = mat_acc.AccData;
+                [obj.PositionFile, obj.ArenaFile] = loadPositionData(obj, obj.Name, obj.Name, camera_file.name);
+                [obj.EthFile, obj.AccFile] = loadEthAccData(obj, obj.Name, obj.Name, ethacc_file.name);
+%                obj.PositionData = mat_pos.PositionData;
+%                obj.ArenaData = arena_pos.ArenaData;
+%                obj.EthData = mat_eth.EthData;
+%                obj.AccData = mat_acc.AccData;
             end
         end
         
@@ -86,7 +90,7 @@ classdef Trial
         
         function [ethout, accout] = loadEthAccData(this, dir_in, filename_in, ethaccdata_name)
             [ethout, existed] = loadDataFile(this, dir_in, strcat(Trial.EthPrefix, filename_in));
-            accout = loadDataFile(this, dir_in, strcat(Trial.AccPrefix, filename_in));
+            [accout, ~] = loadDataFile(this, dir_in, strcat(Trial.AccPrefix, filename_in));
             if ~existed
                 ethaccData = fread(fopen(ethaccdata_name), 'float64','ieee-be');
                 n_ten = find(ethaccData==-500);

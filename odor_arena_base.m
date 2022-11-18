@@ -9,6 +9,7 @@ clear file i
 import RealTimeOdorNavigation
 dataset = RealTimeOdorNavigation(files);
 clear files
+
 %%
 validFrames = dataset.findValidFramesForTrials(1);
 frames = validFrames.PositionData.FrameIndex(round(length(validFrames.PositionData.FrameIndex)*0.25):round(length(validFrames.PositionData.FrameIndex)*0.75));

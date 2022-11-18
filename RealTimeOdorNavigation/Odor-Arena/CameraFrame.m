@@ -9,15 +9,19 @@ classdef CameraFrame
         isValid logical = true
     end
     methods
-        function obj = CameraFrame(this, cameradata)
-            if nargin == 2
+        function obj = CameraFrame(index, cameradata)
+            obj.Cam_Index = index;
+            if ~isstruct(cameradata)
                 import Camera
-                obj.Cam_Index = this;
                 obj.CameraData = Camera(cameradata);
                 likelihoods = obj.CameraData.getAllLikelihoods(false);
                 for z = 1:length(likelihoods)
                     if(likelihoods(z) < CameraFrame.TOLERANCE), obj.isValid = false; break; end
                 end
+            else
+                obj.Cam_Timestamp = cameradata.Cam_Timestamp;
+                obj.CameraData = cameradata.CameraData;
+                obj.isValid = cameradata.isValid;
             end
         end
         
@@ -43,5 +47,18 @@ classdef CameraFrame
         function out1 = getFrameTimestamp(this), out1 = this.Cam_Timestamp; end
         function out1 = getValidity(this), out1 = this.isValid; end
         
+    end
+    methods (Static)
+        function obj = loadobj(s)
+            if isstruct(s)
+                index = s.Cam_Index;
+                cameradata.CameraData = s.CameraData;
+                cameradata.Cam_Timestamp = s.Cam_Timestamp;
+                cameradata.isValid = s.isValid;
+                obj = CameraFrame(index, cameradata);
+            else
+                obj = s;
+            end
+        end
     end
 end

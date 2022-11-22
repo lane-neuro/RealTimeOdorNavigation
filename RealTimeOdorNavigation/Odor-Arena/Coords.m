@@ -33,4 +33,20 @@ classdef Coords
             likelihood = this.getLikelihood();
         end
     end
+    
+    %%
+    methods (Static)
+        function obj = loadobj(s)
+            if isstruct(s)
+                newobj = Coords();
+                newobj.X = s.X;
+                newobj.Y = s.Y;
+                newobj.Likelihood = s.Likelihood;
+                newobj.isStatic = s.isStatic;
+                obj = newobj;
+            else
+                obj = s;
+            end
+        end
+    end
 end

@@ -22,6 +22,16 @@ classdef Camera
             end
         end
         
+        function s = saveobj(this)
+            s.Nose = this.Nose;
+            s.LeftEar = this.LeftEar;
+            s.RightEar = this.RightEar;
+            s.Neck = this.Neck;
+            s.Body = this.Body;
+            s.Tailbase = this.Tailbase;
+            s.Port = this.Port;
+        end
+        
         %% Get Methods
         function out1 = getAllPoints(this, inc_likelihood, inc_port)
             if inc_port
@@ -86,9 +96,27 @@ classdef Camera
         function ang = calcAngleBetweenCoords(~, p1, p2)
             xDiff = p2.getX() - p1.getX();
             yDiff = p2.getY() - p1.getY();
-            
             ang = atan2d(yDiff, xDiff);
-            if ang < 0, ang = ang + 360; end
+            if ang < 0, ang = ang + 360; end % add 360 deg if calculated ang < 0
+        end
+    end
+    
+    %%
+    methods (Static)
+        function obj = loadobj(s)
+            if isstruct(s)
+                newobj = Camera();
+                newobj.Nose = s.Nose;
+                newobj.LeftEar = s.LeftEar;
+                newobj.RightEar = s.RightEar;
+                newobj.Neck = s.Neck;
+                newobj.Body = s.Body;
+                newobj.Tailbase = s.Tailbase;
+                newobj.Port = s.Port;
+                obj = newobj;
+            else
+                obj = s;
+            end
         end
     end
 end

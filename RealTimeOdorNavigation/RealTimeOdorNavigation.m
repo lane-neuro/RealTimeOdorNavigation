@@ -1,5 +1,6 @@
 classdef RealTimeOdorNavigation
     properties (Constant, Hidden = true)
+        % Crop Parameters
         X = 9
         Y = 79
         WIDTH = 564
@@ -19,13 +20,13 @@ classdef RealTimeOdorNavigation
         
         %% Get & Find Methods
         function out1 = getDataStructForTrials(this, trials_in)
-            out1 = Trial.empty(length(trials_in),0);
+            out1 = struct('Date', {}, 'SubjectID', {}, 'VideoPath', {}, 'PositionData', {}, 'ArenaData', {}, 'EthData', {}, 'AccData', {});
             for ii = 1:length(trials_in), out1(ii) = this.TrialDataset(trials_in(ii)).getDataStruct(false); end
         end
         
         function out1 = findValidFramesForTrials(this, trials_in)
-            out1 = Trial.empty(length(trials_in),0);
-            for i = 1:length(trials_in), out1(i) = this.TrialDataset(trials_in(i)).getDataStruct(true); end
+            out1 = struct('Date', {}, 'SubjectID', {}, 'VideoPath', {}, 'PositionData', {}, 'ArenaData', {}, 'EthData', {}, 'AccData', {});
+            for ii = 1:length(trials_in), out1(ii) = this.TrialDataset(trials_in(ii)).getDataStruct(true); end
         end
         
         function imgs = getImagesForFramesInTrial(this, trial_in, iframes)

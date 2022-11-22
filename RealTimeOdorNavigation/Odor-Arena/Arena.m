@@ -8,13 +8,18 @@ classdef Arena
     end
     methods
         function obj = Arena(arena_data)
-            import Coords
-            if nargin == 1
+            if ~isstruct(arena_data)
                 obj.TopLeft = Coords(arena_data(1), arena_data(2));
                 obj.TopRight = Coords(arena_data(3), arena_data(4));
                 obj.BottomLeft = Coords(arena_data(5), arena_data(6));
                 obj.BottomRight = Coords(arena_data(7), arena_data(8));
                 obj.Port = Coords(arena_data(9), arena_data(10));
+            else
+                obj.TopLeft = arena_data.TopLeft;
+                obj.TopRight = arena_data.TopRight;
+                obj.BottomLeft = arena_data.BottomLeft;
+                obj.BottomRight = arena_data.BottomRight;
+                obj.Port = arena_data.Port;
             end
         end
         
@@ -28,6 +33,17 @@ classdef Arena
             [x(4), y(4)] = this.BottomRight.getCoord();
             [x(5), y(5)] = this.Port.getCoord();
             out1 = [x' y'];
+        end
+    end
+    
+    %%
+    methods (Static)
+        function obj = loadobj(s)
+            if isstruct(s)
+                obj = Arena(s);
+            else
+                obj = s;
+            end
         end
     end
 end

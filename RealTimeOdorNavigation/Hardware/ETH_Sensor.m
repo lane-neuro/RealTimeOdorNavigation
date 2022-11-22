@@ -7,11 +7,17 @@ classdef ETH_Sensor
     end
     methods
         function obj = ETH_Sensor(voltage, time, c_time)
-            if nargin > 0
+            if nargin > 1
                 obj.Voltage = voltage;
                 obj.DAQ_Time = time;
                 obj.Camera_Time = c_time;
             end
+        end
+        
+        function s = saveobj(this)
+            s.Voltage = this.Voltage;
+            s.DAQ_Time = this.DAQ_Time;
+            s.Camera_Time = this.Camera_Time;
         end
         
         function voltage = getEthReading(this), voltage = this.Voltage; end
@@ -20,6 +26,17 @@ classdef ETH_Sensor
         function [voltage, time] = getEthVoltageWithTime(this)
             voltage = this.getEthReading();
             time = this.getEthTime();
+        end
+    end
+    
+    %%
+    methods (Static)
+        function obj = loadobj(s)
+            if isstruct(s)
+                obj = ETH_Sensor(s.Voltage, s.DAQ_Time, s.Camera_Time);
+            else
+                obj = s;
+            end
         end
     end
 end

@@ -1,5 +1,5 @@
 classdef CameraFrame
-    properties (Constant)
+    properties (Constant, Hidden = true)
         TOLERANCE = 0.95
     end
     properties
@@ -11,14 +11,13 @@ classdef CameraFrame
     methods
         function obj = CameraFrame(index, cameradata)
             obj.Cam_Index = index;
-            if ~isstruct(cameradata)
-                import Camera
+            if ~isstruct(cameradata) % new data
                 obj.CameraData = Camera(cameradata);
                 likelihoods = obj.CameraData.getAllLikelihoods(false);
                 for z = 1:length(likelihoods)
                     if(likelihoods(z) < CameraFrame.TOLERANCE), obj.isValid = false; break; end
                 end
-            else
+            else % loaded from matfile
                 obj.Cam_Timestamp = cameradata.Cam_Timestamp;
                 obj.CameraData = cameradata.CameraData;
                 obj.isValid = cameradata.isValid;
@@ -46,8 +45,9 @@ classdef CameraFrame
         function out1 = getFrameIndex(this), out1 = this.Cam_Index; end
         function out1 = getFrameTimestamp(this), out1 = this.Cam_Timestamp; end
         function out1 = getValidity(this), out1 = this.isValid; end
-        
     end
+    
+    %% 
     methods (Static)
         function obj = loadobj(s)
             if isstruct(s)

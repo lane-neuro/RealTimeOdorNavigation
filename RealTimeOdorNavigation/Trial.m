@@ -73,7 +73,7 @@ classdef Trial
             filename_in = strcat(filename_in, '.mat');
             successout = true;
             if ~isfile(filename_in)
-                save(filename_in, 'dir_in', '-v7');
+                save(filename_in, 'dir_in', '-v7.3');
                 fprintf('[RTON] Created Data File: %s\n', filename_in);
                 successout = false;
             end

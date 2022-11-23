@@ -157,8 +157,10 @@ classdef Trial
         function size_out = getEthDataSize(this), [~, size_out] = size(this.EthFile, 'ethData'); end
         
         function out1 = getAllEthData(this, inc_time)
+            fprintf('[RTON] getAllEthData(): Init \n');
             eth_size = getEthDataSize(this);
             voltage = zeros(eth_size, 0);
+            fprintf('[RTON] getAllEthData(): Collecting Ethanol Data \n');
             ethData = getEthData(this, 1:eth_size);
             if inc_time
                 time_data = zeros(eth_size, 0);
@@ -176,10 +178,12 @@ classdef Trial
         function size_out = getAccDataSize(this), [~, size_out] = size(this.AccFile, 'accData'); end
         
         function out1 = getAllAccelerometerData(this, inc_time)
+            fprintf('[RTON] getAllAccelerometerData(): Init \n');
             acc_size = getAccDataSize(this);
             x = zeros(acc_size, 0);
             y = zeros(acc_size, 0);
             z = zeros(acc_size, 0);
+            fprintf('[RTON] getAllAccelerometerData(): Collecting Accelerometer Data \n');
             accData = getAccData(this, 1:acc_size);
             if inc_time
                 time = zeros(acc_size, 0);
@@ -195,11 +199,10 @@ classdef Trial
         end
         
         %% Position Data Methods
-        function size_out = getPositionDataSize(this)
-            [~, size_out] = size(this.PositionFile, 'positionData');
-        end
+        function size_out = getPositionDataSize(this), [~, size_out] = size(this.PositionFile, 'positionData'); end
         
         function out1 = getCoordsForFrames(this, frame_num, lh, port)
+            fprintf('[RTON] getCoordsForFrames(): Init \n');
             if nargin == 2
                 columns_in = 2;
                 rows_in = 6;
@@ -213,6 +216,7 @@ classdef Trial
                 if port, rows_in = 7; else, rows_in = 6; end
             end
             out1 = zeros(rows_in, columns_in, length(frame_num));
+            fprintf('[RTON] getCoordsForFrames(): Collecting Position Data \n');
             posData = this.getPositionData(frame_num);
             parfor ii = 1:length(frame_num)
                 out1(:,:,ii) = posData(ii).getFrameCoordinates(lh, port);
@@ -220,14 +224,18 @@ classdef Trial
         end
         
         function out1 = getAnglesForFrames(this, iFrames)
+            fprintf('[RTON] getAnglesForFrames(): Init \n');
             a = zeros(length(iFrames), 0);
             b = zeros(length(iFrames), 0);
             c = zeros(length(iFrames), 0);
             
+            fprintf('[RTON] getAnglesForFrames(): Collecting Position Data \n');
             pos_data = this.getPositionData(iFrames);
+            fprintf('[RTON] getAnglesForFrames(): Collecting Frame Angles \n');
             for ii = 1:length(pos_data)
                 [a(ii), b(ii), c(ii)] = pos_data(ii).getFrameAngles();
             end
+            fprintf('[RTON] getAnglesForFrames(): Returning Data Struct \n');
             out1 = [iFrames a' b' c'];
         end
         
@@ -235,17 +243,20 @@ classdef Trial
             prevFolder = pwd;
             cd(strcat('C:\Users\girelab\MATLAB_DATA\\', this.Name, '\images'));
             
+            fprintf('[RTON] getImagesForFrames(): Init \n');
             videoLoaded = false;
             imgs = zeros(length(iFrames), 0);
             for ii = 1:length(iFrames)
                 image_name = strcat(num2str(iFrames(ii)), '__', this.Name, '.jpg');
                 if ~isfile(image_name)
                     if ~videoLoaded
+                        fprintf('[RTON] getImagesForFrames(): Loading Trial Video \n');
                         cd ..
                         video = read(VideoReader(this.VideoPath));
                         videoLoaded = true;
                         cd images
                     end
+                    fprintf('[RTON] getImagesForFrames(): Saving frame [%i] image to images folder \n', iFrames(ii));
                     imwrite(video(:, :, :, iFrames(ii)), image_name);
                 end
                 imgs(ii).Frame = iFrames(ii);
@@ -256,12 +267,14 @@ classdef Trial
         
         %% Aggregation Methods
         function out1 = getAllFrameData(this, exc_valid)
+            fprintf('[RTON] getAllFrameData(): Init \n');
             pos_size = this.getPositionDataSize();
             index_data = zeros(pos_size, 0);
 %            time_data = zeros(this.getPositionDataSize(), 0);
             valid_flag = zeros(pos_size, 0);
             coords_data = zeros(7, 3, 0);
             currentIndex = 0;
+            fprintf('[RTON] getAllFrameData(): Collecting Position Data \n');
             posData = this.getPositionData(1:pos_size);
             for ii = 1:pos_size
                 if exc_valid && ~posData(ii).getValidity(), continue; end
@@ -286,15 +299,20 @@ classdef Trial
         end
         
         function out1 = getDataStruct(this, exc_invalid)
+            fprintf('[RTON] getDataStruct(): Init \n');
             out1.Date = this.TrialDate;
             out1.SubjectID = this.SubjectID;
             out1.VideoPath = this.VideoPath;
 %            out1.TrialNum = this.TrialNum;
 %            out1.Name = this.Name;
+            fprintf('[RTON] getDataStruct(): Collecting Position Data \n');
             out1.PositionData = this.getAllFrameData(exc_invalid);
             out1.ArenaData = this.getArenaData.getArenaCoordinates();
+            fprintf('[RTON] getDataStruct(): Collecting Ethanol Sensor Data \n');
             out1.EthData = this.getAllEthData(true);
+            fprintf('[RTON] getDataStruct(): Collecting Accelerometer Data \n');
             out1.AccData = this.getAllAccelerometerData(true);
+            fprintf('[RTON] getDataStruct(): Returning Data Struct \n');
         end
         
     end

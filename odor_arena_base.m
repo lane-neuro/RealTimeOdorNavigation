@@ -15,7 +15,7 @@ validFrames = dataset.findValidFramesForTrials(1:end);
 frames = validFrames.PositionData.FrameIndex(round(length(validFrames.PositionData.FrameIndex)*0.25):round(length(validFrames.PositionData.FrameIndex)*0.75));
 frames = sort(randsample(frames(1:end),round(length(frames)*0.05)));
 angles = dataset.TrialDataset(1).getAnglesForFrames(frames(1:end));
-vid_images = dataset.getImagesForFramesInTrial(1, frames(1:3));
+vid_images = dataset.getImagesForFramesInTrial(1, frames(1:end));
 
 %%
 %imcrop([9,573], [79,335], vid_images(1).Image); %[dataset.X, dataset.Y, dataset.WIDTH - 1, dataset.HEIGHT - 1]

@@ -5,27 +5,43 @@ cd('C:\Users\girelab\2022TrialData')
 for i = 1:length(file), files(i) = dir(char(file(i))); end
 clear file i
 
-
 import RealTimeOdorNavigation
 dataset = RealTimeOdorNavigation(files);
 clear files
 %%
 
-validFrames = dataset.findValidFramesForTrials(1:end);
+validFrames = dataset.findValidFramesForTrials(1);
 frames = validFrames.PositionData.FrameIndex(round(length(validFrames.PositionData.FrameIndex)*0.25):round(length(validFrames.PositionData.FrameIndex)*0.75));
 frames = sort(randsample(frames(1:end),round(length(frames)*0.05)));
+%%
+saveData(dataset.TrialDataset(1), 'frames', frames);
 angles = dataset.TrialDataset(1).getAnglesForFrames(frames(1:end));
+saveData(dataset.TrialDataset(1), 'angles', angles);
 vid_images = dataset.getImagesForFramesInTrial(1, frames(1:end));
 
 %%
 %imcrop([9,573], [79,335], vid_images(1).Image); %[dataset.X, dataset.Y, dataset.WIDTH - 1, dataset.HEIGHT - 1]
-vid_images(1).Image = vid_images(1).Image(79:335, 9:573, :);
-imshow(vid_images(1).Image);
-hold on
-title(vid_images(1).Frame);
-coords = dataset.TrialDataset(1).getCoordsForFrames(vid_images(1).Frame, false, true);
-plot([coords(1,1), coords(4,1)], [coords(1,2), coords(4,2)], '-o');
-plot([coords(4,1), coords(5,1)], [coords(4,2), coords(5,2)], '-o');
+coords = dataset.TrialDataset(1).getCoordsForFrames(frames, false, true);
+%%
+for ii = 1:numel(vid_images)
+    vid_images(ii).Image = vid_images(ii).Image(79:335, 9:573, :);
+    figure, set(gcf,'Units','pixels');
+    imshow(vid_images(ii).Image);
+    hold on
+    title(vid_images(ii).Frame);
+    
+    txt(1) = {sprintf('Neck->Nose   %0.5f', angles(ii,2))};
+    txt(2) = {sprintf('Body->Neck   %0.5f', angles(ii,3))};
+    txt(3) = {sprintf('Tailbase->Body   %0.5f', angles(ii,4))};
+    text(20,285,txt,'FontSize',12);
+    
+    plot([coords(1,1,ii), coords(4,1,ii)], [coords(1,2,ii), coords(4,2,ii)], '-o');
+    plot([coords(4,1,ii), coords(5,1,ii)], [coords(4,2,ii), coords(5,2,ii)], '-o');
+    plot([coords(5,1,ii), coords(6,1,ii)], [coords(5,2,ii), coords(6,2,ii)], '-o');
+    plot(coords(7,1,ii), coords(7,2,ii), '-o');
+    
+    
+end
 
 %%
 %{   

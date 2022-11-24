@@ -61,6 +61,7 @@ classdef Trial
             if ~isfolder(name_in) 
                 mkdir(name_in);
                 mkdir(name_in, 'images');
+                mkdir(name_in, 'saved_data');
                 fprintf('[RTON] Created Directory: %s\n', name_in);
                 out1 = false;
             end
@@ -122,6 +123,16 @@ classdef Trial
                 accout.accData = tempAcc;
                 clear ethaccData n_ten frame_stamp time_stamp ethData accData
             end
+        end
+        
+        function saveData(this, name_in, data_in)
+            prevFolder = pwd;
+            cd(strcat('C:\Users\girelab\MATLAB_DATA\\', this.Name, '\saved_data'));
+            file_name = strcat(name_in, '_', strrep(datestr(now), ':', '-'), '_saved.mat');
+            fprintf('[RTON] Saving Data to File: %s\n', file_name);
+            mfile = matfile(file_name, 'Writable', true);
+            mfile.data = data_in;
+            cd(prevFolder);
         end
         
         function dataout = getPositionData(this, iFrames)

@@ -2,29 +2,35 @@ clear all; close all; clc
 
 cd('C:\Users\girelab\2022TrialData')
 [file, ~] = uigetfile('*.csv;*.dat', 'MultiSelect', 'on');
-for i = 1:length(file), files(i) = dir(char(file(i))); end
+for ii = 1:numel(file), files(ii) = dir(char(file(ii))); end
 clear file i
 
 import RealTimeOdorNavigation
 dataset = RealTimeOdorNavigation(files);
 clear files
-%%
+cd('C:\Users\girelab\MATLAB_DATA');
+save('save_1.mat', 'dataset', '-v7.3');
 
-validFrames = dataset.findValidFramesForTrials(1);
+%%
+trialNum = 1;
+validFrames = dataset.findValidFramesForTrials(trialNum);
 frames = validFrames.PositionData.FrameIndex(round(length(validFrames.PositionData.FrameIndex)*0.25):round(length(validFrames.PositionData.FrameIndex)*0.75));
 frames = sort(randsample(frames(1:end),round(length(frames)*0.05)));
-%%
-saveData(dataset.TrialDataset(1), 'frames', frames);
-angles = dataset.TrialDataset(1).getAnglesForFrames(frames(1:end));
-saveData(dataset.TrialDataset(1), 'angles', angles);
-vid_images = dataset.getImagesForFramesInTrial(1, frames(1:end));
 
-%%
+saveData(dataset.TrialDataset(trialNum), 'frames', frames);
+angles = dataset.TrialDataset(trialNum).getAnglesForFrames(frames(1:end));
+saveData(dataset.TrialDataset(trialNum), 'angles', angles);
+vid_images = dataset.getImagesForFramesInTrial(trialNum, frames(1:end));
+
+
 %imcrop([9,573], [79,335], vid_images(1).Image); %[dataset.X, dataset.Y, dataset.WIDTH - 1, dataset.HEIGHT - 1]
-coords = dataset.TrialDataset(1).getCoordsForFrames(frames, false, true);
-%%
+coords = dataset.TrialDataset(trialNum).getCoordsForFrames(frames, false, true);
+
 for ii = 1:numel(vid_images)
-    vid_images(ii).Image = vid_images(ii).Image(79:335, 9:573, :);
+    [nRows, ~, ~] = size(vid_images(ii));
+    if nRows > 300
+        vid_images(ii).Image = vid_images(ii).Image(79:335, 9:573, :);
+    end
     figure, set(gcf,'Units','pixels');
     imshow(vid_images(ii).Image);
     hold on
@@ -35,13 +41,14 @@ for ii = 1:numel(vid_images)
     txt(3) = {sprintf('Tailbase->Body   %0.5f', angles(ii,4))};
     text(20,285,txt,'FontSize',12);
     
-    plot([coords(1,1,ii), coords(4,1,ii)], [coords(1,2,ii), coords(4,2,ii)], '-o');
-    plot([coords(4,1,ii), coords(5,1,ii)], [coords(4,2,ii), coords(5,2,ii)], '-o');
-    plot([coords(5,1,ii), coords(6,1,ii)], [coords(5,2,ii), coords(6,2,ii)], '-o');
-    plot(coords(7,1,ii), coords(7,2,ii), '-o');
+    plot([coords(1,1,ii), coords(4,1,ii)], [coords(1,2,ii), coords(4,2,ii)], '.');
+    plot([coords(4,1,ii), coords(5,1,ii)], [coords(4,2,ii), coords(5,2,ii)], '.');
+    plot([coords(5,1,ii), coords(6,1,ii)], [coords(5,2,ii), coords(6,2,ii)], '.');
+    plot(coords(7,1,ii), coords(7,2,ii), '.');
     
     
 end
+
 
 %%
 %{   

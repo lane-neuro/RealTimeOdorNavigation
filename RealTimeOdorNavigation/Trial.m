@@ -25,11 +25,23 @@ classdef Trial
     end
     methods
         %% Trial Constructor
-        function obj = Trial(ethacc_file, camera_file)
-            if nargin == 2
+        function obj = Trial(in1, camera_file)
+            if nargin == 1
+                if isstruct(in1)
+                    load_trial = Trial.empty();
+                    load_trial.TrialDate = s.TrialDate;
+                    load_trial.TrialNum = s.TrialNum;
+                    load_trial.SubjectID = s.SubjectID;
+                    load_trial.Name = s.Name;
+                    load_trial.VideoPath = s.VideoPath;
+                    obj = load_trial;
+                else
+                    fprintf('something wrong lol\n');
+                end
+            elseif nargin == 2
                 obj.Name = extractBefore(camera_file.name, '_reencoded');
+                obj.VideoPath = strcat(obj.Name, '.mp4');
                 bCheckDataDirectory(obj, obj.Name);
-                obj.VideoPath = strcat(obj.Name, '.avi');
                 obj.TrialDate = datetime(char(extractBefore(camera_file.name, '-M')),'InputFormat','M-d-u-h-m a');
                 
                 subStr = extractBetween(camera_file.name, "CB", "_");
@@ -40,21 +52,29 @@ classdef Trial
                 fprintf("[RTON] Loading Positional Data...\n");
                 [obj.PositionFile, obj.ArenaFile] = loadPositionData(obj, obj.Name, obj.Name, camera_file.name);
                 fprintf("[RTON] Loading Ethanol & Accelerometer Data...\n");
-                [obj.EthFile, obj.AccFile] = loadEthAccData(obj, obj.Name, obj.Name, ethacc_file.name);
-                fprintf("[RTON] Trial: %s - Loaded!\n", obj.Name);
+                [obj.EthFile, obj.AccFile] = loadEthAccData(obj, obj.Name, obj.Name, in1.name);
+                fprintf("[RTON] Trial Loaded: %s\n", obj.Name);
+            else
+                fprintf('[RTON] Empty Trial Constructor.\n');
             end
         end
         
         function s = saveobj(obj)
+            fprintf('[RTON] Saving Trial..\n');
+            s = struct;
             s.TrialDate = obj.TrialDate;
             s.TrialNum = obj.TrialNum;
             s.SubjectID = obj.SubjectID;
             s.Name = obj.Name;
             s.VideoPath = obj.VideoPath;
+            s.PositionFile = obj.PositionFile;
+            s.ArenaFile = obj.ArenaFile;
+            s.EthFile = obj.EthFile;
+            s.AccFile = obj.AccFile;
         end
         
         %% Data Storage Methods
-        function out1 = bCheckDataDirectory(~, name_in)
+        function out1 = bCheckDataDirectory(this, name_in)
             prevFolder = pwd;
             cd('C:\Users\girelab\MATLAB_DATA');
             out1 = true;
@@ -62,6 +82,7 @@ classdef Trial
                 mkdir(name_in);
                 mkdir(name_in, 'images');
                 mkdir(name_in, 'saved_data');
+                copyfile(strcat('C:\Users\girelab\2022TrialData\', this.VideoPath), strcat(name_in, '\', this.VideoPath)); 
                 fprintf('[RTON] Created Directory: %s\n', name_in);
                 out1 = false;
             end
@@ -131,7 +152,7 @@ classdef Trial
             file_name = strcat(name_in, '_', strrep(datestr(now), ':', '-'), '_saved.mat');
             fprintf('[RTON] Saving Data to File: %s\n', file_name);
             mfile = matfile(file_name, 'Writable', true);
-            mfile.data = data_in;
+            mfile.(name_in) = data_in;
             cd(prevFolder);
         end
         
@@ -326,6 +347,27 @@ classdef Trial
             fprintf('[RTON] getDataStruct(): Returning Data Struct \n');
         end
         
+    end
+    
+    %% 
+    methods (Static)
+        function obj = loadobj(s)
+            if isstruct(s)
+                load_trial = Trial();
+                load_trial.TrialDate = s.TrialDate;
+                load_trial.TrialNum = s.TrialNum;
+                load_trial.SubjectID = s.SubjectID;
+                load_trial.Name = s.Name;
+                load_trial.VideoPath = s.VideoPath;
+                load_trial.PositionFile = s.PositionFile;
+                load_trial.ArenaFile = s.ArenaFile;
+                load_trial.EthFile = s.EthFile;
+                load_trial.AccFile = s.AccFile;
+                obj = load_trial;
+            else
+                obj = s;
+            end
+        end
     end
 end
 

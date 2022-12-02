@@ -10,12 +10,25 @@ classdef RealTimeOdorNavigation
         TrialDataset Trial
     end
     methods
-        function obj = RealTimeOdorNavigation(data_files)
+        function obj = RealTimeOdorNavigation(in1, ~)
             import Trial
-            if nargin == 1
-                fprintf('Number of Trials Selected: %i\n', length(data_files)/2);
-                for ii = 1:length(data_files)/2, obj.TrialDataset(ii) = Trial(data_files((ii*2) - 1), data_files(ii*2)); end
+            if nargin == 2
+                if isstruct(in1)
+                    fprintf('[RTON] Loading Trials from Dataset File\n');
+                    load_dataset = RealTimeOdorNavigation();
+                    load_dataset.TrialDataset = in1.TrialDataset;
+                    obj = load_dataset;
+                end
+            elseif nargin == 1
+                fprintf('[RTON] Number of Trials Selected: %i\n', length(in1)/2);
+                for ii = 1:length(in1)/2, obj.TrialDataset(ii) = Trial(in1((ii*2) - 1), in1(ii*2)); end
+            else
+                fprintf('[RTON] Empty RTON Constructor\n');
             end
+        end
+        
+        function s = saveobj(obj)
+            s.TrialDataset = obj.TrialDataset;
         end
         
         %% Get & Find Methods
@@ -31,6 +44,18 @@ classdef RealTimeOdorNavigation
         
         function imgs = getImagesForFramesInTrial(this, trial_in, iframes)
             imgs = this.TrialDataset(trial_in).getImagesForFrames(iframes);
+        end
+    end
+    
+    %% 
+    methods (Static)
+        function obj = loadobj(s)
+            if isstruct(s)
+                struct_out = struct('TrialDataset', s.TrialDataset);
+                obj = RealTimeOdorNavigation(struct_out, 0);
+            else
+                obj = s;
+            end
         end
     end
 end

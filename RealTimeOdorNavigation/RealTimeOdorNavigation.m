@@ -11,23 +11,28 @@ classdef RealTimeOdorNavigation
     end
     methods
         function obj = RealTimeOdorNavigation(in1, ~)
-            import Trial
             if nargin == 2
                 if isstruct(in1)
                     fprintf('[RTON] Loading Trials from Dataset File\n');
-                    load_dataset = RealTimeOdorNavigation();
-                    load_dataset.TrialDataset = in1.TrialDataset;
-                    obj = load_dataset;
+                    obj.TrialDataset = in1.TrialDataset;
                 end
             elseif nargin == 1
-                fprintf('[RTON] Number of Trials Selected: %i\n', length(in1)/2);
+                fprintf('[RTON] Number of Trials Being Processed: %i\n', length(in1)/2);
                 for ii = 1:length(in1)/2, obj.TrialDataset(ii) = Trial(in1((ii*2) - 1), in1(ii*2)); end
             else
                 fprintf('[RTON] Empty RTON Constructor\n');
+                prevFolder = pwd;
+                cd('C:\Users\girelab\2022TrialData')
+                [file, ~] = uigetfile('*.csv;*.dat;*.mat', 'MultiSelect', 'on');
+                for ii = 1:numel(file), files(ii) = dir(char(file(ii))); end
+                obj = RealTimeOdorNavigation(files);
+                cd(prevFolder);
             end
         end
         
         function s = saveobj(obj)
+            fprintf('[RTON] Saving Dataset..\n');
+            s = struct;
             s.TrialDataset = obj.TrialDataset;
         end
         
@@ -51,6 +56,7 @@ classdef RealTimeOdorNavigation
     methods (Static)
         function obj = loadobj(s)
             if isstruct(s)
+                fprintf('[RTON] Loading Dataset..\n');
                 struct_out = struct('TrialDataset', s.TrialDataset);
                 obj = RealTimeOdorNavigation(struct_out, 0);
             else

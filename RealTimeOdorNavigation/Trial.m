@@ -28,15 +28,11 @@ classdef Trial
         function obj = Trial(in1, camera_file)
             if nargin == 1
                 if isstruct(in1)
-                    load_trial = Trial.empty();
-                    load_trial.TrialDate = s.TrialDate;
-                    load_trial.TrialNum = s.TrialNum;
-                    load_trial.SubjectID = s.SubjectID;
-                    load_trial.Name = s.Name;
-                    load_trial.VideoPath = s.VideoPath;
-                    obj = load_trial;
-                else
-                    fprintf('something wrong lol\n');
+                    obj.TrialDate = in1.TrialDate;
+                    obj.TrialNum = in1.TrialNum;
+                    obj.SubjectID = in1.SubjectID;
+                    obj.Name = in1.Name;
+                    obj.VideoPath = in1.VideoPath;
                 end
             elseif nargin == 2
                 obj.Name = extractBefore(camera_file.name, '_reencoded');
@@ -353,6 +349,7 @@ classdef Trial
     methods (Static)
         function obj = loadobj(s)
             if isstruct(s)
+                fprintf('[RTON] Loading Trial..\n');
                 load_trial = Trial();
                 load_trial.TrialDate = s.TrialDate;
                 load_trial.TrialNum = s.TrialNum;

@@ -1,14 +1,9 @@
 clear all; close all; clc
 
-cd('C:\Users\girelab\2022TrialData')
-[file, ~] = uigetfile('*.csv;*.dat', 'MultiSelect', 'on');
-for ii = 1:numel(file), files(ii) = dir(char(file(ii))); end
-clear file i
-
-import RealTimeOdorNavigation
-dataset = RealTimeOdorNavigation(files);
-clear files
 cd('C:\Users\girelab\MATLAB_DATA');
+import RealTimeOdorNavigation
+dataset = RealTimeOdorNavigation();
+
 save('save_1.mat', 'dataset', '-v7.3');
 
 %%

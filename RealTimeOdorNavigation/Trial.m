@@ -25,7 +25,7 @@ classdef Trial
     end
     methods
         %% Trial Constructor
-        function obj = Trial(in1, camera_file)
+        function obj = Trial(in1, in2)
             if nargin == 1
                 if isstruct(in1)
                     obj.TrialDate = in1.TrialDate;
@@ -35,20 +35,24 @@ classdef Trial
                     obj.VideoPath = in1.VideoPath;
                 end
             elseif nargin == 2
-                obj.Name = extractBefore(camera_file.name, '_reencoded');
-                obj.VideoPath = strcat(obj.Name, '.mp4');
+                [~, tempName1, ~] = fileparts(in1);
+                [~, tempName2, ~] = fileparts(in2);
+                tempName1{1} = tempName1{1}(1:end-4);
+                tempName1 = extractBefore(tempName1, '_reencoded');
+                obj.Name = extractBefore(tempName2, '_reencoded');
+                obj.VideoPath = strcat(obj.Name, '_reencoded.mp4');
                 bCheckDataDirectory(obj, obj.Name);
-                obj.TrialDate = datetime(char(extractBefore(camera_file.name, '-M')),'InputFormat','M-d-u-h-m a');
+                obj.TrialDate = datetime(char(extractBefore(tempName2, '-M')),'InputFormat','M-d-u-h-m a');
                 
-                subStr = extractBetween(camera_file.name, "CB", "_");
+                subStr = extractBetween(tempName2, "CB", "_");
                 obj.SubjectID = str2num(char(extractBefore(subStr, '-')));
                 obj.TrialNum = str2num(char(extractAfter(subStr, '-')));
                 clear subStr
                 
                 fprintf("[RTON] Loading Positional Data...\n");
-                [obj.PositionFile, obj.ArenaFile] = loadPositionData(obj, obj.Name, obj.Name, camera_file.name);
+                [obj.PositionFile, obj.ArenaFile] = loadPositionData(obj, obj.Name, obj.Name, strcat(tempName2, '.csv'));
                 fprintf("[RTON] Loading Ethanol & Accelerometer Data...\n");
-                [obj.EthFile, obj.AccFile] = loadEthAccData(obj, obj.Name, obj.Name, in1.name);
+                [obj.EthFile, obj.AccFile] = loadEthAccData(obj, obj.Name, obj.Name, strcat(tempName1, '.avi.dat'));
                 fprintf("[RTON] Trial Loaded: %s\n", obj.Name);
             else
                 fprintf('[RTON] Empty Trial Constructor.\n');
@@ -78,7 +82,7 @@ classdef Trial
                 mkdir(name_in);
                 mkdir(name_in, 'images');
                 mkdir(name_in, 'saved_data');
-                copyfile(strcat('C:\Users\girelab\2022TrialData\', this.VideoPath), strcat(name_in, '\', this.VideoPath)); 
+                copyfile(strcat('C:\Users\girelab\2022.12.06_Tariq-Lane\2021_original-videos_no-crop\', this.VideoPath), strcat(name_in, '\', this.VideoPath)); 
                 fprintf('[RTON] Created Directory: %s\n', name_in);
                 out1 = false;
             end

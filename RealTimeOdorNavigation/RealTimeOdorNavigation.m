@@ -18,14 +18,39 @@ classdef RealTimeOdorNavigation
                 end
             elseif nargin == 1
                 fprintf('[RTON] Number of Trials Being Processed: %i\n', length(in1)/2);
-                for ii = 1:length(in1)/2, obj.TrialDataset(ii) = Trial(in1((ii*2) - 1), in1(ii*2)); end
+                for ii = 1:length(in1)/2
+                    obj.TrialDataset(ii) = Trial(in1((ii*2) - 1), in1(ii*2));
+                end
             else
-                fprintf('[RTON] Empty RTON Constructor\n');
+                fprintf('[RTON] Novel Dataset Analysis..\n');
                 prevFolder = pwd;
-                cd('C:\Users\girelab\2022TrialData')
-                [file, ~] = uigetfile('*.csv;*.dat;*.mat', 'MultiSelect', 'on');
-                for ii = 1:numel(file), files(ii) = dir(char(file(ii))); end
-                obj = RealTimeOdorNavigation(files);
+                cd('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data');
+                [file, path] = uigetfile('*.csv;*.mat', 'MultiSelect', 'on');
+                [nFiles, ~] = size(file);
+                if nFiles == 0
+                    fprintf('[RTON] User cancelled file selection.');
+                else
+                    if nFiles == 1
+                        files = strings(nFiles*2, 0);
+                        [path,name,ext] = fileparts(fullfile(path, file));
+                        if isequal(ext, '.mat')
+                            obj = load(fullfile(path, strcat(name, ext)));
+                            return;
+                        elseif isequal(ext, '.csv')
+                            files(1) = strcat(path, '\', name, '.avi.dat');
+                            files(2) = strcat(path, '\', name, ext);
+                            obj = RealTimeOdorNavigation(files);
+                        end
+                    else
+                        files = strings(nFiles*2, 0);
+                        for jj = 1:nFiles
+                            [path,name,ext] = fileparts(fullfile(path(jj), file(jj)));
+                            files(jj*2) = strcat(path, '\', name, ext);
+                            files((jj*2)-1) = strcat(path, '\', name, '.avi.dat');
+                        end
+                        obj = RealTimeOdorNavigation(files);
+                    end
+                end
                 cd(prevFolder);
             end
         end
@@ -35,6 +60,7 @@ classdef RealTimeOdorNavigation
             s = struct;
             s.TrialDataset = obj.TrialDataset;
         end
+
         
         %% Get & Find Methods
         function out1 = getDataStructForTrials(this, trials_in)

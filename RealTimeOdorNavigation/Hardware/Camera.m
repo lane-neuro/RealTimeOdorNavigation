@@ -21,17 +21,7 @@ classdef Camera
                 obj.Port = Coords(camera_frame_data(20), camera_frame_data(21), camera_frame_data(22));
             end
         end
-        
-        function s = saveobj(this)
-            s.Nose = this.Nose;
-            s.LeftEar = this.LeftEar;
-            s.RightEar = this.RightEar;
-            s.Neck = this.Neck;
-            s.Body = this.Body;
-            s.Tailbase = this.Tailbase;
-            s.Port = this.Port;
-        end
-        
+                
         %% Get Methods
         function out1 = getAllPoints(this, inc_likelihood, inc_port)
             if inc_port
@@ -98,6 +88,17 @@ classdef Camera
             yDiff = p2.getY() - p1.getY();
             ang = atan2d(yDiff, xDiff);
             if ang < 0, ang = ang + 360; end % add 360 deg if calculated ang < 0
+        end
+        
+        %% Save
+        function s = saveobj(obj)
+            s.Nose = obj.Nose;
+            s.LeftEar = obj.LeftEar;
+            s.RightEar = obj.RightEar;
+            s.Neck = obj.Neck;
+            s.Body = obj.Body;
+            s.Tailbase = obj.Tailbase;
+            s.Port = obj.Port;
         end
     end
     

@@ -32,6 +32,15 @@ classdef Coords
             y = this.getY();
             likelihood = this.getLikelihood();
         end
+        
+        %% Save
+        function s = saveobj(obj)
+            s = struct;
+            s.X = obj.X;
+            s.Y = obj.Y;
+            s.Likelihood = obj.Likelihood;
+            s.isStatic = obj.isStatic;
+        end
     end
     
     %%

@@ -26,7 +26,7 @@ classdef RealTimeOdorNavigation
                 prevFolder = pwd;
                 cd('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data');
                 [file, path] = uigetfile('*.csv;*.mat', 'MultiSelect', 'on');
-                [nFiles, ~] = size(file);
+                if iscell(file), [~, nFiles] = size(file); else, [nFiles, ~] = size(file); end
                 if nFiles == 0
                     fprintf('[RTON] User cancelled file selection.');
                 else
@@ -34,7 +34,7 @@ classdef RealTimeOdorNavigation
                         files = strings(nFiles*2, 0);
                         [path,name,ext] = fileparts(fullfile(path, file));
                         if isequal(ext, '.mat')
-                            obj = load(fullfile(path, strcat(name, ext)));
+                            obj = load(char(fullfile(path, strcat(name, ext))));
                             return;
                         elseif isequal(ext, '.csv')
                             files(1) = strcat(path, '\', name, '.avi.dat');
@@ -44,7 +44,7 @@ classdef RealTimeOdorNavigation
                     else
                         files = strings(nFiles*2, 0);
                         for jj = 1:nFiles
-                            [path,name,ext] = fileparts(fullfile(path(jj), file(jj)));
+                            [path,name,ext] = fileparts(char(fullfile(path, file(1,jj))));
                             files(jj*2) = strcat(path, '\', name, ext);
                             files((jj*2)-1) = strcat(path, '\', name, '.avi.dat');
                         end

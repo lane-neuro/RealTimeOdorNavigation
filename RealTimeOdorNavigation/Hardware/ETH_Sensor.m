@@ -3,7 +3,7 @@ classdef ETH_Sensor
         Voltage double
         DAQ_Time uint32
         Camera_Time uint32
-        Frame_Index uint32
+        Frame_Index uint32 = 0
     end
     methods
         function obj = ETH_Sensor(voltage, time, c_time)
@@ -14,10 +14,11 @@ classdef ETH_Sensor
             end
         end
         
-        function s = saveobj(this)
-            s.Voltage = this.Voltage;
-            s.DAQ_Time = this.DAQ_Time;
-            s.Camera_Time = this.Camera_Time;
+        function s = saveobj(obj)
+            s.Voltage = obj.Voltage;
+            s.DAQ_Time = obj.DAQ_Time;
+            s.Camera_Time = obj.Camera_Time;
+            s.Frame_Index = obj.Frame_Index;
         end
         
         function voltage = getEthReading(this), voltage = this.Voltage; end

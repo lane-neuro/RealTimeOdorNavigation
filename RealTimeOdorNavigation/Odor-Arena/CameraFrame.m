@@ -45,6 +45,15 @@ classdef CameraFrame
         function out1 = getFrameIndex(this), out1 = this.Cam_Index; end
         function out1 = getFrameTimestamp(this), out1 = this.Cam_Timestamp; end
         function out1 = getValidity(this), out1 = this.isValid; end
+        
+        %% Save
+        function s = saveobj(obj)
+            s = struct;
+            s.Cam_Index = obj.Cam_Index;
+            s.Cam_Timestamp = obj.Cam_Timestamp;
+            s.CameraData = obj.CameraData;
+            s.isValid = obj.isValid;
+        end
     end
     
     %% 

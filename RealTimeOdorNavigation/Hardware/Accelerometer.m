@@ -17,14 +17,6 @@ classdef Accelerometer
             end
         end
         
-        function s = saveobj(this)
-            s.X = this.X;
-            s.Y = this.Y;
-            s.Z = this.Z;
-            s.DAQ_Time = this.DAQ_Time;
-            s.Camera_Time = this.Camera_Time;
-        end
-        
         function [x, y, z] = getAccReading(this)
             x = this.X;
             y = this.Y;
@@ -36,6 +28,15 @@ classdef Accelerometer
         function [x, y, z, time] = getAccReadingWithTime(this)
             [x, y, z] = this.getAccReading();
             time = this.getAccTime();
+        end
+        
+        %% Save
+        function s = saveobj(obj)
+            s.X = obj.X;
+            s.Y = obj.Y;
+            s.Z = obj.Z;
+            s.DAQ_Time = obj.DAQ_Time;
+            s.Camera_Time = obj.Camera_Time;
         end
     end
     

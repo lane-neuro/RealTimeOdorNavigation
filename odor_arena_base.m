@@ -4,7 +4,7 @@ cd('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data');
 import RealTimeOdorNavigation
 dataset = RealTimeOdorNavigation();
 
-save('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data\Lane_test-12-6.mat', 'dataset', '-v7.3');
+save('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data\Lane_test-12-15.mat', 'dataset', '-v7.3');
 
 %%
 trialNum = 1;
@@ -24,7 +24,7 @@ coords = dataset.TrialDataset(trialNum).getCoordsForFrames(frames, false, true);
 for ii = 1:numel(vid_images)
     [nRows, ~, ~] = size(vid_images(ii));
     if nRows > 300
-        vid_images(ii).Image = vid_images(ii).Image(79:335, 9:573, :);
+        vid_images(ii).Image = vid_images(ii).Image(80:335, 10:573, :);
     end
     figure, set(gcf,'Units','pixels');
     imshow(vid_images(ii).Image);

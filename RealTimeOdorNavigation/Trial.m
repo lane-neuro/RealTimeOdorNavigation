@@ -11,10 +11,6 @@ classdef Trial
         ArenaFile
         EthFile
         AccFile
-        PositionData CameraFrame
-        ArenaData Arena
-        EthData ETH_Sensor
-        AccData Accelerometer
     end
     properties
         TrialDate datetime
@@ -22,17 +18,23 @@ classdef Trial
         SubjectID uint16
         Name char
         VideoPath char
+        BackgroundData uint8
     end
     methods
         %% Trial Constructor
         function obj = Trial(in1, in2)
             if nargin == 1
                 if isstruct(in1)
+                    obj.PositionFile = in1.PositionFile;
+                    obj.ArenaFile = in1.ArenaFile;
+                    obj.EthFile = in1.EthFile;
+                    obj.AccFile = in1.AccFile;
                     obj.TrialDate = in1.TrialDate;
                     obj.TrialNum = in1.TrialNum;
                     obj.SubjectID = in1.SubjectID;
                     obj.Name = in1.Name;
                     obj.VideoPath = in1.VideoPath;
+                    obj.BackgroundData = in1.BackgroundData;
                 end
             elseif nargin == 2
                 [~, tempName1, ~] = fileparts(in1);
@@ -47,12 +49,13 @@ classdef Trial
                 subStr = extractBetween(tempName2, "CB", "_");
                 obj.SubjectID = str2num(char(extractBefore(subStr, '-')));
                 obj.TrialNum = str2num(char(extractAfter(subStr, '-')));
-                clear subStr
                 
                 fprintf("[RTON] Loading Positional Data...\n");
                 [obj.PositionFile, obj.ArenaFile] = loadPositionData(obj, obj.Name, obj.Name, strcat(tempName2, '.csv'));
                 fprintf("[RTON] Loading Ethanol & Accelerometer Data...\n");
                 [obj.EthFile, obj.AccFile] = loadEthAccData(obj, obj.Name, obj.Name, strcat(tempName1, '.avi.dat'));
+                fprintf("[RTON] Processing Field & Data Boundaries...\n");
+                obj.BackgroundData = calcFieldBounds(obj);
                 fprintf("[RTON] Trial Loaded: %s\n", obj.Name);
             else
                 fprintf('[RTON] Empty Trial Constructor.\n');
@@ -62,15 +65,16 @@ classdef Trial
         function s = saveobj(obj)
             fprintf('[RTON] Saving Trial..\n');
             s = struct;
+            s.PositionFile = obj.PositionFile;
+            s.ArenaFile = obj.ArenaFile;
+            s.EthFile = obj.EthFile;
+            s.AccFile = obj.AccFile;
             s.TrialDate = obj.TrialDate;
             s.TrialNum = obj.TrialNum;
             s.SubjectID = obj.SubjectID;
             s.Name = obj.Name;
             s.VideoPath = obj.VideoPath;
-            s.PositionFile = obj.PositionFile;
-            s.ArenaFile = obj.ArenaFile;
-            s.EthFile = obj.EthFile;
-            s.AccFile = obj.AccFile;
+            s.BackgroundData = obj.BackgroundData;
         end
         
         %% Data Storage Methods
@@ -297,6 +301,21 @@ classdef Trial
             cd(prevFolder);
         end
         
+        function obj = calcFieldBounds(this)
+            prevFolder = pwd;
+            cd(strcat('C:\Users\girelab\MATLAB_DATA\', this.Name));
+            
+            video = VideoReader(this.VideoPath);
+            framedata = video.read([1 100]);
+            [~, ~, ~, nFrames] = size(framedata);
+            graydata = zeros(256, 564, 1, 0, 'uint8');
+            for ii = 1:nFrames
+                graydata(:, :, :, ii) = imgaussfilt(rgb2gray(framedata(80:335,10:573,:,ii)), 2);
+            end
+            obj = uint8(mean(graydata,4));
+            cd(prevFolder);
+        end
+        
         %% Aggregation Methods
         function out1 = getAllFrameData(this, exc_valid)
             fprintf('[RTON] getAllFrameData(): Init \n');
@@ -355,15 +374,16 @@ classdef Trial
             if isstruct(s)
                 fprintf('[RTON] Loading Trial..\n');
                 load_trial = Trial();
+                load_trial.PositionFile = s.PositionFile;
+                load_trial.ArenaFile = s.ArenaFile;
+                load_trial.EthFile = s.EthFile;
+                load_trial.AccFile = s.AccFile;
                 load_trial.TrialDate = s.TrialDate;
                 load_trial.TrialNum = s.TrialNum;
                 load_trial.SubjectID = s.SubjectID;
                 load_trial.Name = s.Name;
                 load_trial.VideoPath = s.VideoPath;
-                load_trial.PositionFile = s.PositionFile;
-                load_trial.ArenaFile = s.ArenaFile;
-                load_trial.EthFile = s.EthFile;
-                load_trial.AccFile = s.AccFile;
+                load_trial.BackgroundData = s.BackgroundData;
                 obj = load_trial;
             else
                 obj = s;

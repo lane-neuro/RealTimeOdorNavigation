@@ -136,8 +136,6 @@ classdef Trial
                 ethData = ethaccData(n_ten+4);
                 accData = [ethaccData(n_ten+9) ethaccData(n_ten+10) ethaccData(n_ten+8)];
                 
-                import ETH_Sensor
-                import Accelerometer
                 tempEth = ETH_Sensor.empty(length(ethData),0);
                 tempAcc = Accelerometer.empty(length(accData),0);
                 parfor ii = 1:length(ethData)

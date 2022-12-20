@@ -1,7 +1,7 @@
 clear all; close all; clc
 
 cd('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data');
-import RealTimeOdorNavigation
+import RealTimeOdorNavigation/RealTimeOdorNavigation.*
 dataset = RealTimeOdorNavigation();
 
 save('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data\Lane_test-12-15.mat', 'dataset', '-v7.3');

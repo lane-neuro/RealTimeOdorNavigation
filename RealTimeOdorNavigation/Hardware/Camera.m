@@ -10,7 +10,6 @@ classdef Camera
     end
     methods
         function obj = Camera(camera_frame_data)
-            import Coords
             if nargin > 0
                 obj.Nose = Coords(camera_frame_data(2), camera_frame_data(3), camera_frame_data(4));
                 obj.LeftEar = Coords(camera_frame_data(5), camera_frame_data(6), camera_frame_data(7));

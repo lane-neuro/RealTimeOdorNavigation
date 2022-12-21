@@ -8,18 +8,17 @@ save('C:\Users\girelab\MATLAB_DATA\Lane_test-12-15.mat', 'dataset', '-v7.3');
 
 %%
 trialNum = 1;
-validFrames = dataset.findValidFramesForTrials(trialNum);
+validFrames = dataset.getDataForTrials(trialNum, EthOutput=false, AccOutput=false);
 frames = validFrames.PositionData.FrameIndex(round(length(validFrames.PositionData.FrameIndex)*0.25):round(length(validFrames.PositionData.FrameIndex)*0.75));
 frames = sort(randsample(frames(1:end),round(length(frames)*0.05)));
 
-saveData(dataset.TrialDataset(trialNum), 'frames', frames);
-angles = dataset.TrialDataset(trialNum).getAnglesForFrames(frames(1:end));
-saveData(dataset.TrialDataset(trialNum), 'angles', angles);
+angles = dataset.TrialDataset(trialNum).getAngleForFrames("Neck", "Nose", frames(1:end));
 vid_images = dataset.getImagesForFramesInTrial(trialNum, frames(1:end));
 
+saveData(dataset.TrialDataset(trialNum), 'frames', frames);
+saveData(dataset.TrialDataset(trialNum), 'angles', angles);
 
-%imcrop([9,573], [79,335], vid_images(1).Image); %[dataset.X, dataset.Y, dataset.WIDTH - 1, dataset.HEIGHT - 1]
-coords = dataset.TrialDataset(trialNum).getCoordsForFrames(frames, false, true);
+coords = dataset.TrialDataset(trialNum).getCoordsForFrames(frames, Port=true);
 
 for ii = 1:numel(vid_images)
     [nRows, ~, ~] = size(vid_images(ii));

@@ -1,4 +1,4 @@
-classdef ETH_Sensor
+classdef ETH_Sensor < handle
     properties
         Voltage double
         DAQ_Time uint32

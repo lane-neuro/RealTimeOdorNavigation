@@ -1,4 +1,4 @@
-classdef Accelerometer
+classdef Accelerometer < handle
     properties
         X double
         Y double

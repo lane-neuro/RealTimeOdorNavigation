@@ -1,4 +1,4 @@
-classdef Camera
+classdef Camera < handle
     properties
         Nose Coords
         LeftEar Coords
@@ -46,7 +46,7 @@ classdef Camera
             [x(6), y(6)] = this.getTailbase();
             out1 = [x' y'];
 
-            if options.Likelihood, out1 = [x' y' this.getAllLikelihoods(options.Port)']; end
+            if options.Likelihood, out1 = [x' y' this.getAllLikelihoods(Port=options.Port)']; end
         end
         
         function likelihoods = getAllLikelihoods(this, options)

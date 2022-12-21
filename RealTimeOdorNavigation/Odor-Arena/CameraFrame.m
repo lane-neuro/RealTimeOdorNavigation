@@ -13,7 +13,7 @@ classdef CameraFrame
             obj.Cam_Index = index;
             if ~isstruct(cameradata) % new data
                 obj.CameraData = Camera(cameradata);
-                likelihoods = obj.CameraData.getAllLikelihoods(false);
+                likelihoods = obj.CameraData.getAllLikelihoods(Port=false);
                 for z = 1:length(likelihoods)
                     if(likelihoods(z) < CameraFrame.TOLERANCE), obj.isValid = false; break; end
                 end
@@ -29,7 +29,7 @@ classdef CameraFrame
             out1 = struct;
             out1.Index = this.getFrameIndex();
             out1.Time = this.getFrameTimestamp();
-            out1.Coordinates = this.getFrameCoordinates(true, true);
+            out1.Coordinates = this.getFrameCoordinates(Likelihood=true, Port=true);
             out1.Valid = this.isValid;
         end
         
@@ -40,7 +40,7 @@ classdef CameraFrame
                 options.Port logical = false
             end
 
-            out1 = this.CameraData.getAllPoints(options.Likelihood, options.Port);
+            out1 = this.CameraData.getAllPoints(Likelihood=options.Likelihood, Port=options.Port);
         end
         
         function out1 = getFrameAngle(this, p1_name, p2_name)
@@ -50,7 +50,7 @@ classdef CameraFrame
                 p2_name string {mustBeMember(p2_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
             end
 
-            out1 = this.CameraData.calcAngleBetweenCoords(this.CameraData, p1_name, p2_name);
+            out1 = this.CameraData.calcAngleBetweenCoords(p1_name, p2_name);
         end
         
         function out1 = getFrameIndex(this), out1 = this.Cam_Index; end

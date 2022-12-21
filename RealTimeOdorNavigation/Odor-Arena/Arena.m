@@ -1,4 +1,4 @@
-classdef Arena
+classdef Arena < handle
     properties
         TopLeft Coords
         TopRight Coords

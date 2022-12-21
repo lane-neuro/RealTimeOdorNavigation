@@ -1,4 +1,4 @@
-classdef RealTimeOdorNavigation
+classdef RealTimeOdorNavigation < handle
     properties (Constant, Hidden = true)
         % Crop Parameters
         X = 9
@@ -56,18 +56,27 @@ classdef RealTimeOdorNavigation
         end
         
         %% Get & Find Methods
-        function out1 = getDataStructForTrials(this, trials_in)
+        function out1 = getDataForTrials(this, trial_index, options)
+            arguments (Input)
+                this RealTimeOdorNavigation
+                trial_index
+                options.OnlyValid logical = true
+                options.EthOutput logical = true
+                options.AccOutput logical = true
+            end
+
             out1 = struct('Date', {}, 'SubjectID', {}, 'VideoPath', {}, 'PositionData', {}, 'ArenaData', {}, 'EthData', {}, 'AccData', {});
-            for ii = 1:length(trials_in), out1(ii) = this.TrialDataset(trials_in(ii)).getDataStruct(false); end
+            for ii = 1:length(trial_index), out1(ii) = this.TrialDataset(trial_index(ii)).getDataStruct(OnlyValid=options.OnlyValid, EthOutput=options.EthOutput, AccOutput=options.AccOutput); end
         end
         
-        function out1 = findValidFramesForTrials(this, trials_in)
-            out1 = struct('Date', {}, 'SubjectID', {}, 'VideoPath', {}, 'PositionData', {}, 'ArenaData', {}, 'EthData', {}, 'AccData', {});
-            for ii = 1:length(trials_in), out1(ii) = this.TrialDataset(trials_in(ii)).getDataStruct(true); end
-        end
-        
-        function imgs = getImagesForFramesInTrial(this, trial_in, iframes)
-            imgs = this.TrialDataset(trial_in).getImagesForFrames(iframes);
+        function imgs = getImagesForFramesInTrial(this, trial_index, frames)
+            arguments (Input)
+                this RealTimeOdorNavigation
+                trial_index
+                frames
+            end
+
+            imgs = this.TrialDataset(trial_index).getImagesForFrames(frames);
         end
     end
     
@@ -78,7 +87,7 @@ classdef RealTimeOdorNavigation
             s = struct;
             s.TrialDataset = obj.TrialDataset;
         end
-        
+
         function obj = loadobj(s)
             if isstruct(s)
                 fprintf('[RTON] Loading Dataset..\n');

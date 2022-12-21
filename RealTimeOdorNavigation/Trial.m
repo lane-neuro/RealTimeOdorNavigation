@@ -62,21 +62,6 @@ classdef Trial
             end
         end
         
-        function s = saveobj(obj)
-            fprintf('[RTON] Saving Trial..\n');
-            s = struct;
-            s.PositionFile = obj.PositionFile;
-            s.ArenaFile = obj.ArenaFile;
-            s.EthFile = obj.EthFile;
-            s.AccFile = obj.AccFile;
-            s.TrialDate = obj.TrialDate;
-            s.TrialNum = obj.TrialNum;
-            s.SubjectID = obj.SubjectID;
-            s.Name = obj.Name;
-            s.VideoPath = obj.VideoPath;
-            s.BackgroundData = obj.BackgroundData;
-        end
-        
         %% Data Storage Methods
         function out1 = bCheckDataDirectory(this, name_in)
             prevFolder = pwd;
@@ -265,10 +250,12 @@ classdef Trial
             
             fprintf('[RTON] getAnglesForFrames(): Collecting Position Data \n');
             pos_data = this.getPositionData(iFrames);
+            
             fprintf('[RTON] getAnglesForFrames(): Collecting Frame Angles \n');
             for ii = 1:length(pos_data)
                 [a(ii), b(ii), c(ii)] = pos_data(ii).getFrameAngles();
             end
+
             fprintf('[RTON] getAnglesForFrames(): Returning Data Struct \n');
             out1 = [iFrames a' b' c'];
         end
@@ -315,18 +302,25 @@ classdef Trial
         end
         
         %% Aggregation Methods
-        function out1 = getAllFrameData(this, exc_valid)
+        function out1 = getAllFrameData(this, options)
+            arguments (Input)
+                this Trial
+                options.OnlyValid logical = true
+            end
+
             fprintf('[RTON] getAllFrameData(): Init \n');
+            out1 = struct;
             pos_size = this.getPositionDataSize();
             index_data = zeros(pos_size, 0);
 %            time_data = zeros(this.getPositionDataSize(), 0);
             valid_flag = zeros(pos_size, 0);
             coords_data = zeros(7, 3, 0);
             currentIndex = 0;
+
             fprintf('[RTON] getAllFrameData(): Collecting Position Data \n');
             posData = this.getPositionData(1:pos_size);
             for ii = 1:pos_size
-                if exc_valid && ~posData(ii).getValidity(), continue; end
+                if options.OnlyValid && ~posData(ii).getValidity(), continue; end
                 currentIndex = currentIndex + 1;
                 temp = posData(ii).getFrameData();
                 coords_data(:,:,currentIndex) = temp.Coordinates;
@@ -334,40 +328,69 @@ classdef Trial
 %                time_data(i) = temp.Time;
                 valid_flag(currentIndex) = temp.Valid;
             end
-            if exc_valid
+            if options.OnlyValid
                 index_data = nonzeros(index_data);
 %                time_data = nonzeros(time_data);
                 coords_data = coords_data(:,:,1:currentIndex);
                 valid_flag = nonzeros(valid_flag);
             end
+
             out1.FrameIndex = index_data;
 %            out1.time_data = time_data';
             out1.FrameCoordinates = coords_data;
             out1.FrameValidity = valid_flag;
-            clear posData
         end
         
-        function out1 = getDataStruct(this, exc_invalid)
+        function out1 = getDataStruct(this, options)
+            arguments (Input)
+                this Trial
+                options.OnlyValid logical = true
+                options.EthOutput logical = true
+                options.AccOutput logical = true
+            end
+
             fprintf('[RTON] getDataStruct(): Init \n');
+            out1 = struct;
             out1.Date = this.TrialDate;
             out1.SubjectID = this.SubjectID;
             out1.VideoPath = this.VideoPath;
-%            out1.TrialNum = this.TrialNum;
-%            out1.Name = this.Name;
+            out1.Name = this.Name;
+
             fprintf('[RTON] getDataStruct(): Collecting Position Data \n');
-            out1.PositionData = this.getAllFrameData(exc_invalid);
+            out1.PositionData = this.getAllFrameData(options.OnlyValid);
             out1.ArenaData = this.getArenaData.getArenaCoordinates();
-            fprintf('[RTON] getDataStruct(): Collecting Ethanol Sensor Data \n');
-            out1.EthData = this.getAllEthData(true);
-            fprintf('[RTON] getDataStruct(): Collecting Accelerometer Data \n');
-            out1.AccData = this.getAllAccelerometerData(true);
+
+            if(options.EthOutput)
+                fprintf('[RTON] getDataStruct(): Collecting Ethanol Sensor Data \n');
+                out1.EthData = this.getAllEthData(true);
+            end
+
+            if(options.AccOutput)
+                fprintf('[RTON] getDataStruct(): Collecting Accelerometer Data \n');
+                out1.AccData = this.getAllAccelerometerData(true);
+            end
+
             fprintf('[RTON] getDataStruct(): Returning Data Struct \n');
         end
-        
     end
     
-    %% 
+    %% Save, Load
     methods (Static)
+        function s = saveobj(obj)
+            fprintf('[RTON] Saving Trial..\n');
+            s = struct;
+            s.PositionFile = obj.PositionFile;
+            s.ArenaFile = obj.ArenaFile;
+            s.EthFile = obj.EthFile;
+            s.AccFile = obj.AccFile;
+            s.TrialDate = obj.TrialDate;
+            s.TrialNum = obj.TrialNum;
+            s.SubjectID = obj.SubjectID;
+            s.Name = obj.Name;
+            s.VideoPath = obj.VideoPath;
+            s.BackgroundData = obj.BackgroundData;
+        end
+
         function obj = loadobj(s)
             if isstruct(s)
                 fprintf('[RTON] Loading Trial..\n');

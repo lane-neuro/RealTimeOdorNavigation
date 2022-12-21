@@ -26,27 +26,40 @@ classdef CameraFrame
         
         %% Get Methods
         function out1 = getFrameData(this)
+            out1 = struct;
             out1.Index = this.getFrameIndex();
             out1.Time = this.getFrameTimestamp();
             out1.Coordinates = this.getFrameCoordinates(true, true);
             out1.Valid = this.isValid;
         end
         
-        function out1 = getFrameCoordinates(this, inc_likelihood, inc_port)
-            out1 = this.CameraData.getAllPoints(inc_likelihood, inc_port);
+        function out1 = getFrameCoordinates(this, options)
+            arguments (Input)
+                this CameraFrame
+                options.Likelihood logical = false
+                options.Port logical = false
+            end
+
+            out1 = this.CameraData.getAllPoints(options.Likelihood, options.Port);
         end
         
-        function [neckNose, bodyNeck, tailbaseBody] = getFrameAngles(this)
-            neckNose = this.CameraData.getNeckToNoseAngle();
-            bodyNeck = this.CameraData.getBodyToNeckAngle();
-            tailbaseBody = this.CameraData.getTailbaseToBodyAngle();
+        function out1 = getFrameAngle(this, p1_name, p2_name)
+            arguments (Input)
+                this CameraFrame
+                p1_name string {mustBeMember(p1_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                p2_name string {mustBeMember(p2_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+            end
+
+            out1 = this.CameraData.calcAngleBetweenCoords(this.CameraData, p1_name, p2_name);
         end
         
         function out1 = getFrameIndex(this), out1 = this.Cam_Index; end
         function out1 = getFrameTimestamp(this), out1 = this.Cam_Timestamp; end
         function out1 = getValidity(this), out1 = this.isValid; end
-        
-        %% Save
+    end
+    
+    %% Save, Load
+    methods (Static)
         function s = saveobj(obj)
             s = struct;
             s.Cam_Index = obj.Cam_Index;
@@ -54,10 +67,7 @@ classdef CameraFrame
             s.CameraData = obj.CameraData;
             s.isValid = obj.isValid;
         end
-    end
-    
-    %% 
-    methods (Static)
+
         function obj = loadobj(s)
             if isstruct(s)
                 index = s.Cam_Index;

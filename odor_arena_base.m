@@ -1,10 +1,10 @@
-clear all; close all; clc
+clear variables; clc
 
 cd('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data');
 import RealTimeOdorNavigation/RealTimeOdorNavigation.*
 dataset = RealTimeOdorNavigation();
 
-save('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data\Lane_test-12-15.mat', 'dataset', '-v7.3');
+save('C:\Users\girelab\MATLAB_DATA\Lane_test-12-15.mat', 'dataset', '-v7.3');
 
 %%
 trialNum = 1;

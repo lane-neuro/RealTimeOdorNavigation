@@ -55,13 +55,6 @@ classdef RealTimeOdorNavigation
             end
         end
         
-        function s = saveobj(obj)
-            fprintf('[RTON] Saving Dataset..\n');
-            s = struct;
-            s.TrialDataset = obj.TrialDataset;
-        end
-
-        
         %% Get & Find Methods
         function out1 = getDataStructForTrials(this, trials_in)
             out1 = struct('Date', {}, 'SubjectID', {}, 'VideoPath', {}, 'PositionData', {}, 'ArenaData', {}, 'EthData', {}, 'AccData', {});
@@ -78,8 +71,14 @@ classdef RealTimeOdorNavigation
         end
     end
     
-    %% 
+    %% Save, Load
     methods (Static)
+        function s = saveobj(obj)
+            fprintf('[RTON] Saving Dataset..\n');
+            s = struct;
+            s.TrialDataset = obj.TrialDataset;
+        end
+        
         function obj = loadobj(s)
             if isstruct(s)
                 fprintf('[RTON] Loading Dataset..\n');

@@ -14,24 +14,29 @@ classdef ETH_Sensor
             end
         end
         
+        function [voltage, time] = getEthReading(this, options)
+            arguments (Input)
+                this ETH_Sensor
+                options.Time logical = false
+            end
+
+            voltage = this.Voltage; 
+            if(options.Time), time = this.getEthTime(); end
+        end
+
+        function time = getEthTime(this), time = this.DAQ_Time; end
+    end
+    
+    %% Save, Load
+    methods (Static)
         function s = saveobj(obj)
+            s = struct;
             s.Voltage = obj.Voltage;
             s.DAQ_Time = obj.DAQ_Time;
             s.Camera_Time = obj.Camera_Time;
             s.Frame_Index = obj.Frame_Index;
         end
-        
-        function voltage = getEthReading(this), voltage = this.Voltage; end
-        function time = getEthTime(this), time = this.DAQ_Time; end
-        
-        function [voltage, time] = getEthVoltageWithTime(this)
-            voltage = this.getEthReading();
-            time = this.getEthTime();
-        end
-    end
-    
-    %%
-    methods (Static)
+
         function obj = loadobj(s)
             if isstruct(s)
                 obj = ETH_Sensor(s.Voltage, s.DAQ_Time, s.Camera_Time);

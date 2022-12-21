@@ -34,7 +34,10 @@ classdef Arena
             [x(5), y(5)] = this.Port.getCoord();
             out1 = [x' y'];
         end
-        
+    end
+    
+    %% Save, Load
+    methods (Static)
         function s = saveobj(obj)
             s = struct;
             s.TopLeft = obj.TopLeft;
@@ -43,10 +46,7 @@ classdef Arena
             s.BottomRight = obj.BottomRight;
             s.Port = obj.Port;
         end
-    end
-    
-    %%
-    methods (Static)
+
         function obj = loadobj(s)
             if isstruct(s)
                 obj = Arena(s);

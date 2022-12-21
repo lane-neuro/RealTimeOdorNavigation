@@ -22,8 +22,14 @@ classdef Camera
         end
                 
         %% Get Methods
-        function out1 = getAllPoints(this, inc_likelihood, inc_port)
-            if inc_port
+        function out1 = getAllPoints(this, options)
+            arguments (Input)
+                this Camera
+                options.Likelihood logical = false
+                options.Port logical = false
+            end
+
+            if options.Port
                 x = zeros(0,7);
                 y = zeros(0,7);
                 [x(7), y(7)] = this.getPort();
@@ -31,6 +37,7 @@ classdef Camera
                 x = zeros(0,6);
                 y = zeros(0,6);
             end
+
             [x(1), y(1)] = this.getNose();
             [x(2), y(2)] = this.getLeftEar();
             [x(3), y(3)] = this.getRightEar();
@@ -38,19 +45,23 @@ classdef Camera
             [x(5), y(5)] = this.getBody();
             [x(6), y(6)] = this.getTailbase();
             out1 = [x' y'];
-            if inc_likelihood
-                lh = this.getAllLikelihoods(inc_port);
-                out1 = [x' y' lh'];
-            end
+
+            if options.Likelihood, out1 = [x' y' this.getAllLikelihoods(options.Port)']; end
         end
         
-        function likelihoods = getAllLikelihoods(this, inc_port)            
-            if inc_port
+        function likelihoods = getAllLikelihoods(this, options)
+            arguments (Input)
+                this Camera
+                options.Port logical = false
+            end
+
+            if options.Port
                 likelihoods = zeros(0,7);
                 likelihoods(7) = this.Port.getLikelihood();
             else
                 likelihoods = zeros(0,6); 
             end
+
             likelihoods(1) = this.Nose.getLikelihood();
             likelihoods(2) = this.LeftEar.getLikelihood();
             likelihoods(3) = this.RightEar.getLikelihood();
@@ -68,29 +79,25 @@ classdef Camera
         function [x, y, lh] = getTailbase(this), [x, y, lh] = this.Tailbase.getCoord(); end
         function [x, y, lh] = getPort(this), [x, y, lh] = this.Port.getCoord(); end
         
-        %% Calculation Get Methods
-        function ang = getNeckToNoseAngle(this)
-            ang = this.calcAngleBetweenCoords(this.Neck, this.Nose);
-        end
-        
-        function ang = getBodyToNeckAngle(this)
-            ang = this.calcAngleBetweenCoords(this.Body, this.Neck);
-        end
-        
-        function ang = getTailbaseToBodyAngle(this)
-            ang = this.calcAngleBetweenCoords(this.Tailbase, this.Body);            
-        end
-        
-        %% Angle Calculations
-        function ang = calcAngleBetweenCoords(~, p1, p2)
-            xDiff = p2.getX() - p1.getX();
-            yDiff = p2.getY() - p1.getY();
-            ang = atan2d(yDiff, xDiff);
+        %% Angle Calculation
+        function ang = calcAngleBetweenCoords(this, p1_name, p2_name)
+            arguments (Input)
+                this Camera
+                p1_name string {mustBeMember(p1_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                p2_name string {mustBeMember(p2_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+            end
+
+            p1 = this.(p1_name);
+            p2 = this.(p2_name);
+            ang = atan2d(p2.getY() - p1.getY(), p2.getX() - p1.getX());
             if ang < 0, ang = ang + 360; end % add 360 deg if calculated ang < 0
         end
-        
-        %% Save
+    end
+    
+    %% Save, Load
+    methods (Static)
         function s = saveobj(obj)
+            s = struct;
             s.Nose = obj.Nose;
             s.LeftEar = obj.LeftEar;
             s.RightEar = obj.RightEar;
@@ -99,10 +106,7 @@ classdef Camera
             s.Tailbase = obj.Tailbase;
             s.Port = obj.Port;
         end
-    end
-    
-    %%
-    methods (Static)
+
         function obj = loadobj(s)
             if isstruct(s)
                 newobj = Camera();

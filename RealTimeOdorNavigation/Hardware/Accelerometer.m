@@ -17,31 +17,32 @@ classdef Accelerometer
             end
         end
         
-        function [x, y, z] = getAccReading(this)
+        function [x, y, z, time] = getAccReading(this, options)
+            arguments (Input)
+                this Accelerometer
+                options.Time logical = false
+            end
+
             x = this.X;
             y = this.Y;
             z = this.Z;
+            if(options.Time), time = this.getAccTime(); end
         end
         
         function time = getAccTime(this), time = this.DAQ_Time; end
-        
-        function [x, y, z, time] = getAccReadingWithTime(this)
-            [x, y, z] = this.getAccReading();
-            time = this.getAccTime();
-        end
-        
-        %% Save
+    end
+    
+    %%
+    methods (Static)
         function s = saveobj(obj)
+            s = struct;
             s.X = obj.X;
             s.Y = obj.Y;
             s.Z = obj.Z;
             s.DAQ_Time = obj.DAQ_Time;
             s.Camera_Time = obj.Camera_Time;
         end
-    end
-    
-    %%
-    methods (Static)
+
         function obj = loadobj(s)
             if isstruct(s)
                 obj = Accelerometer([s.X s.Y s.Z], s.DAQ_Time, s.Camera_Time);

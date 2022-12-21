@@ -7,15 +7,17 @@ classdef Coords
     end
     methods
         function obj = Coords(X_in, Y_in, Likelihood_in)
+            arguments
+                X_in double = 0
+                Y_in double = 0
+                Likelihood_in double = 0
+            end
+            obj.X = X_in;
+            obj.Y = Y_in;
             if nargin == 2
                 obj.isStatic = true;
-                obj.X = X_in;
-                obj.Y = Y_in;
-            end
-            if nargin == 3
+            elseif nargin == 3
                 obj.isStatic = false;
-                obj.X = X_in;
-                obj.Y = Y_in;
                 obj.Likelihood = Likelihood_in;
             end
         end
@@ -32,8 +34,10 @@ classdef Coords
             y = this.getY();
             likelihood = this.getLikelihood();
         end
-        
-        %% Save
+    end
+    
+    %% Save, Load
+    methods (Static)
         function s = saveobj(obj)
             s = struct;
             s.X = obj.X;
@@ -41,10 +45,7 @@ classdef Coords
             s.Likelihood = obj.Likelihood;
             s.isStatic = obj.isStatic;
         end
-    end
-    
-    %%
-    methods (Static)
+
         function obj = loadobj(s)
             if isstruct(s)
                 newobj = Coords();

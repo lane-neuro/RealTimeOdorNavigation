@@ -9,38 +9,36 @@ save('C:\Users\girelab\MATLAB_DATA\Lane_test-12-15.mat', 'dataset', '-v7.3');
 %%
 trialNum = 1;
 validFrames = dataset.getDataForTrials(trialNum, EthOutput=false, AccOutput=false);
+
 frames = validFrames.PositionData.FrameIndex(round(length(validFrames.PositionData.FrameIndex)*0.25):round(length(validFrames.PositionData.FrameIndex)*0.75));
 frames = sort(randsample(frames(1:end),round(length(frames)*0.05)));
 
 angles = dataset.TrialDataset(trialNum).getAngleForFrames("Neck", "Nose", frames(1:end));
+coords = dataset.TrialDataset(trialNum).getCoordsForFrames(frames, Port=true);
+%%
 vid_images = dataset.getImagesForFramesInTrial(trialNum, frames(1:end));
 
-saveData(dataset.TrialDataset(trialNum), 'frames', frames);
-saveData(dataset.TrialDataset(trialNum), 'angles', angles);
-
-coords = dataset.TrialDataset(trialNum).getCoordsForFrames(frames, Port=true);
+Trial.saveData(dataset.TrialDataset(trialNum), 'frames', frames);
+Trial.saveData(dataset.TrialDataset(trialNum), 'angles', angles);
 
 for ii = 1:numel(vid_images)
-    [nRows, ~, ~] = size(vid_images(ii));
+    [nRows, ~, ~] = size(vid_images(ii).Image);
     if nRows > 300
-        vid_images(ii).Image = vid_images(ii).Image(80:335, 10:573, :);
+        vid_images(ii).Image = imcrop(vid_images(ii).Image, [16 82 563 255]); % vid_images(ii).Image(80:335, 10:573, :)
     end
+
     figure, set(gcf,'Units','pixels');
     imshow(vid_images(ii).Image);
+    
+    axis on
     hold on
     title(vid_images(ii).Frame);
-    
-    txt(1) = {sprintf('Neck->Nose   %0.5f', angles(ii,2))};
-    txt(2) = {sprintf('Body->Neck   %0.5f', angles(ii,3))};
-    txt(3) = {sprintf('Tailbase->Body   %0.5f', angles(ii,4))};
-    text(20,285,txt,'FontSize',12);
+    text(20,285, sprintf('Neck->Nose   %0.5f', angles(ii,2)), 'FontSize',12);
     
     plot([coords(1,1,ii), coords(4,1,ii)], [coords(1,2,ii), coords(4,2,ii)], '.');
     plot([coords(4,1,ii), coords(5,1,ii)], [coords(4,2,ii), coords(5,2,ii)], '.');
     plot([coords(5,1,ii), coords(6,1,ii)], [coords(5,2,ii), coords(6,2,ii)], '.');
-    plot(coords(7,1,ii), coords(7,2,ii), '.');
-    
-    
+    plot(coords(7,1,ii), coords(7,2,ii), '.');    
 end
 
 

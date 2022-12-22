@@ -299,7 +299,7 @@ classdef Trial < handle
             videoLoaded = false;
             imgs = zeros(length(frames), 0);
             for ii = 1:length(frames)
-                image_name = strcat(num2str(frames(ii)), '__', this.Name, '.jpg');
+                image_name = strcat(num2str(frames(ii)), '__', this.Name, '.png');
                 if ~isfile(image_name)
                     if ~videoLoaded
                         fprintf('[RTON] getImagesForFrames(): Loading Trial Video \n');
@@ -389,17 +389,17 @@ classdef Trial < handle
             out1.Name = this.Name;
 
             fprintf('[RTON] getDataStruct(): Collecting Position Data \n');
-            out1.PositionData = this.getAllFrameData(options.OnlyValid);
+            out1.PositionData = this.getFrameData(OnlyValid=options.OnlyValid);
             out1.ArenaData = this.getArenaData.getArenaCoordinates();
 
             if(options.EthOutput)
                 fprintf('[RTON] getDataStruct(): Collecting Ethanol Sensor Data \n');
-                out1.EthData = this.getAllEthData(true);
+                out1.EthData = this.getAllEthData(Time=true);
             end
 
             if(options.AccOutput)
                 fprintf('[RTON] getDataStruct(): Collecting Accelerometer Data \n');
-                out1.AccData = this.getAllAccelerometerData(true);
+                out1.AccData = this.getAllAccelerometerData(Time=true);
             end
 
             fprintf('[RTON] getDataStruct(): Returning Data Struct \n');
@@ -411,7 +411,7 @@ classdef Trial < handle
         function saveData(this, name_in, data_in)
             prevFolder = pwd;
             cd(strcat('C:\Users\girelab\MATLAB_DATA\\', this.Name, '\saved_data'));
-            file_name = strcat(name_in, '_', strrep(datestr("now"), ':', '-'), '_saved.mat');
+            file_name = strcat(name_in, '_', string(datetime('now', 'Format', 'yyyy-MM-dd_HH.mm')), '_saved.mat');
             fprintf('[RTON] Saving Data to File: %s\n', file_name);
             mfile = matfile(file_name, 'Writable', true);
             mfile.(name_in) = data_in;

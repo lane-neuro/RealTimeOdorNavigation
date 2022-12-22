@@ -64,9 +64,15 @@ classdef RealTimeOdorNavigation < handle
                 options.EthOutput logical = true
                 options.AccOutput logical = true
             end
+            
+            
+            out1 = repmat(struct('Date', {}, 'SubjectID', {}, 'VideoPath', {}, 'Name', {}, 'PositionData', struct, 'ArenaData', [], 'EthData', struct, 'AccData', struct), length(trial_index), 1);
+            if ~options.EthOutput, out1 = rmfield(out1,'EthData'); end
+            if ~options.AccOutput, out1 = rmfield(out1,'AccData'); end
 
-            out1 = struct('Date', {}, 'SubjectID', {}, 'VideoPath', {}, 'PositionData', {}, 'ArenaData', {}, 'EthData', {}, 'AccData', {});
-            for ii = 1:length(trial_index), out1(ii) = this.TrialDataset(trial_index(ii)).getDataStruct(OnlyValid=options.OnlyValid, EthOutput=options.EthOutput, AccOutput=options.AccOutput); end
+            for ii = 1:length(trial_index)
+                out1(ii) = this.TrialDataset(trial_index(ii)).getDataStruct(OnlyValid=options.OnlyValid, EthOutput=options.EthOutput, AccOutput=options.AccOutput);
+            end
         end
         
         function imgs = getImagesForFramesInTrial(this, trial_index, frames)

@@ -42,7 +42,7 @@ classdef Trial < handle
                 tempName1{1} = tempName1{1}(1:end-4);
                 tempName1 = extractBefore(tempName1, '_reencoded');
                 obj.Name = extractBefore(tempName2, '_reencoded');
-                obj.VideoPath = strcat(obj.Name, '_reencoded.mp4');
+                obj.VideoPath = strcat(obj.Name, '_reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_filtered_labeled.mp4');
                 bCheckDataDirectory(obj, obj.Name);
                 obj.TrialDate = datetime(char(extractBefore(tempName2, '-M')),'InputFormat','M-d-u-h-m a');
                 
@@ -72,7 +72,7 @@ classdef Trial < handle
                 mkdir(name_in);
                 mkdir(name_in, 'images');
                 mkdir(name_in, 'saved_data');
-                copyfile(strcat('C:\Users\girelab\2022.12.06_Tariq-Lane\2021_original-videos_no-crop\', this.VideoPath), strcat(name_in, '\', this.VideoPath)); 
+                copyfile(strcat('C:\\Users\\girelab\\2022.12.06_Tariq-Lane\\2022_plotted-videos_fast-quality\\', this.VideoPath), strcat(name_in, '\\', this.VideoPath)); 
                 fprintf('[RTON] Created Directory: %s\n', name_in);
                 out1 = false;
             end
@@ -312,7 +312,7 @@ classdef Trial < handle
                     imwrite(video(:, :, :, frames(ii)), image_name);
                 end
                 imgs(ii).Frame = frames(ii);
-                imgs(ii).Image = imread(image_name);
+                imgs(ii).Image = im2double(imread(image_name));
             end
             cd(prevFolder);
         end
@@ -326,7 +326,7 @@ classdef Trial < handle
             [~, ~, ~, nFrames] = size(framedata);
             graydata = zeros(256, 564, 1, 0, 'uint8');
             for ii = 1:nFrames
-                graydata(:, :, :, ii) = imgaussfilt(rgb2gray(framedata(80:335,10:573,:,ii)), 2);
+                graydata(:, :, :, ii) = imgaussfilt(rgb2gray(framedata(:,:,:,ii)), 2);
             end
             obj = uint8(mean(graydata,4));
             cd(prevFolder);
@@ -379,6 +379,9 @@ classdef Trial < handle
                 options.OnlyValid logical = true
                 options.EthOutput logical = true
                 options.AccOutput logical = true
+                options.PositionData = this.getFrameData()
+                options.EthData
+                options.AccData
             end
 
             fprintf('[RTON] getDataStruct(): Init \n');
@@ -435,7 +438,7 @@ classdef Trial < handle
 
         function obj = loadobj(s)
             if isstruct(s)
-                fprintf('[RTON] Loading Trial..\n');
+                fprintf('[RTON] Loading Trial: %s\n', s.Name);
                 load_trial = Trial();
                 load_trial.PositionFile = s.PositionFile;
                 load_trial.ArenaFile = s.ArenaFile;

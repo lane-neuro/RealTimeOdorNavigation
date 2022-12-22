@@ -8,6 +8,7 @@ classdef RealTimeOdorNavigation < handle
     end
     properties
         TrialDataset Trial
+        BackgroundData uint8
     end
     methods
         function obj = RealTimeOdorNavigation(in1, ~)
@@ -17,10 +18,25 @@ classdef RealTimeOdorNavigation < handle
                     obj.TrialDataset = in1.TrialDataset;
                 end
             elseif nargin == 1
-                fprintf('[RTON] Number of Trials Being Processed: %i\n', length(in1)/2);
-                for ii = 1:length(in1)/2
-                    obj.TrialDataset(ii) = Trial(in1((ii*2) - 1), in1(ii*2));
+                in_size = length(in1);
+                total = 1:in_size;
+                first = total(mod(total,2)~=0);
+                second = total(mod(total,2)==0);
+                in1_str = in1(first);
+                in1_str2 = in1(second);
+
+                fprintf('[RTON] Number of Trials Being Processed: %i\n', in_size/2);
+                d_set(in_size/2) = Trial();
+
+                parfor ii = 1:in_size/2
+                    d_set(ii) = Trial(in1_str(ii), in1_str2(ii));
                 end
+
+                obj.TrialDataset = d_set;
+                b_data(:,:,length(obj.TrialDataset)) = obj.TrialDataset(1:end).BackgroundData;
+                obj.BackgroundData = uint8(mean(b_data,"all"));
+                imshow(obj.BackgroundData);
+
             else
                 fprintf('[RTON] Novel Dataset Analysis..\n');
                 prevFolder = pwd;

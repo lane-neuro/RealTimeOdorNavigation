@@ -18,7 +18,7 @@ classdef Trial < handle
         SubjectID uint16
         Name char
         VideoPath char
-        BackgroundData uint8
+        BackgroundData double
     end
     methods
         %% Trial Constructor
@@ -245,6 +245,7 @@ classdef Trial < handle
             arguments (Input)
                 this Trial
                 frames
+                options.PositionData = this.getPositionData(frames)
                 options.Likelihood logical = false
                 options.Port logical = false
             end
@@ -254,31 +255,29 @@ classdef Trial < handle
             if ~options.Port, rows_in = 6; else, rows_in = 7; end
 
             out1 = zeros(rows_in, columns_in, length(frames));
-            fprintf('[RTON] getCoordsForFrames(): Collecting Position Data \n');
-            posData = this.getPositionData(frames);
             with_likelihood = options.Likelihood;
             with_port = options.Port;
+            pos_data = options.PositionData;
             parfor ii = 1:length(frames)
-                out1(:,:,ii) = posData(ii).getFrameCoordinates(Likelihood=with_likelihood, Port=with_port);
+                out1(:,:,ii) = pos_data(ii).getFrameCoordinates(Likelihood=with_likelihood, Port=with_port);
             end
         end
         
-        function out1 = getAngleForFrames(this, p1_name, p2_name, frames)
+        function out1 = getAngleForFrames(this, p1_name, p2_name, frames, options)
             arguments (Input)
                 this Trial
                 p1_name string {mustBeMember(p1_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
                 p2_name string {mustBeMember(p2_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
                 frames
+                options.PositionData = this.getPositionData(frames)
             end
 
             fprintf('[RTON] getAngleForFrames(): Init \n');
             a = zeros(length(frames), 0);
-            
-            fprintf('[RTON] getAngleForFrames(): Collecting Position Data \n');
-            pos_data = this.getPositionData(frames);
+            pos_data = options.PositionData;
 
             fprintf('[RTON] getAngleForFrames(): Collecting Frame Angle \n');
-            for ii = 1:length(pos_data)
+            parfor ii = 1:length(options.PositionData)
                 [a(ii)] = pos_data(ii).getFrameAngle(p1_name,p2_name);
             end
 
@@ -324,11 +323,11 @@ classdef Trial < handle
             video = VideoReader(this.VideoPath);
             framedata = video.read([1 100]);
             [~, ~, ~, nFrames] = size(framedata);
-            graydata = zeros(256, 564, 1, 0, 'uint8');
+            graydata = zeros(256, 564, 1, 0);
             for ii = 1:nFrames
                 graydata(:, :, :, ii) = imgaussfilt(rgb2gray(framedata(:,:,:,ii)), 2);
             end
-            obj = uint8(mean(graydata,4));
+            obj = mean(graydata,4);
             cd(prevFolder);
         end
         
@@ -379,7 +378,7 @@ classdef Trial < handle
                 options.OnlyValid logical = true
                 options.EthOutput logical = true
                 options.AccOutput logical = true
-                options.PositionData = this.getFrameData()
+                options.PositionData
                 options.EthData
                 options.AccData
             end

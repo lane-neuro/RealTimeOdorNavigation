@@ -20,18 +20,19 @@ classdef RealTimeOdorNavigation < handle
             elseif nargin == 1
                 in_size = length(in1);
                 total = 1:in_size;
-                first = total(mod(total,2)~=0);
-                second = total(mod(total,2)==0);
-                in1_str = in1(first);
-                in1_str2 = in1(second);
+                in1_str = in1(total(mod(total,2)~=0));
+                in1_str2 = in1(total(mod(total,2)==0));
 
                 fprintf('[RTON] Number of Trials Being Processed: %i\n', in_size/2);
+                tic
                 d_set(in_size/2) = Trial();
 
                 parfor ii = 1:in_size/2
                     d_set(ii) = Trial(in1_str(ii), in1_str2(ii));
+                    fprintf('[RTON] ----- Trial Iteration [ %i ] Processed -----\n', ii);
                 end
                 obj.TrialDataset = d_set;
+                toc
                 
                 obj.BackgroundData = zeros(256, 564);
                 for jj = 1:numel(obj.TrialDataset)
@@ -79,17 +80,17 @@ classdef RealTimeOdorNavigation < handle
                 this RealTimeOdorNavigation
                 trial_index
                 options.OnlyValid logical = true
+                options.OnlyInvalid logical = false
                 options.EthOutput logical = true
                 options.AccOutput logical = true
             end
-            
             
             out1 = repmat(struct('Date', {}, 'SubjectID', {}, 'VideoPath', {}, 'Name', {}, 'PositionData', struct, 'ArenaData', [], 'EthData', struct, 'AccData', struct), length(trial_index), 1);
             if ~options.EthOutput, out1 = rmfield(out1,'EthData'); end
             if ~options.AccOutput, out1 = rmfield(out1,'AccData'); end
 
             for ii = 1:length(trial_index)
-                out1(ii) = this.TrialDataset(trial_index(ii)).getDataStruct(OnlyValid=options.OnlyValid, EthOutput=options.EthOutput, AccOutput=options.AccOutput);
+                out1(ii) = this.TrialDataset(trial_index(ii)).getDataStruct(OnlyValid=options.OnlyValid, OnlyInvalid = options.OnlyInvalid, EthOutput=options.EthOutput, AccOutput=options.AccOutput);
             end
         end
         

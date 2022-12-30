@@ -1,6 +1,8 @@
 classdef CameraFrame
     properties (Constant, Hidden = true)
         TOLERANCE = 0.95
+        INSET = 30 % pixels
+        WIDTH = 564 % pixels
     end
     properties
         Cam_Index uint32
@@ -30,7 +32,7 @@ classdef CameraFrame
             out1.Index = this.getFrameIndex();
             out1.Time = this.getFrameTimestamp();
             out1.Coordinates = this.getFrameCoordinates(Likelihood=true, Port=true);
-            out1.Valid = this.isValid;
+            [out1.Valid, out1.Reasoning] = this.getValidity();
         end
         
         function out1 = getFrameCoordinates(this, options)
@@ -54,8 +56,23 @@ classdef CameraFrame
         end
         
         function out1 = getFrameIndex(this), out1 = this.Cam_Index; end
+
         function out1 = getFrameTimestamp(this), out1 = this.Cam_Timestamp; end
-        function out1 = getValidity(this), out1 = this.isValid; end
+
+        function [validity, reason] = getValidity(this)
+            validity = this.isValid;
+            reason = 'valid';
+            if(~this.isValid)
+                reason='likelihood';
+            else
+%                [x1, x2] = this.CameraData.getBoxSize();
+                [x1, ~, ~] = this.CameraData.getBody();
+                if(x1 <= CameraFrame.INSET || x1 >= (CameraFrame.WIDTH - CameraFrame.INSET))
+                    validity = false;
+                    reason='region';
+                end
+            end
+        end
     end
     
     %% Save, Load

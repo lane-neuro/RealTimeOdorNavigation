@@ -336,6 +336,7 @@ classdef Trial < handle
             arguments (Input)
                 this Trial
                 options.OnlyValid logical = true
+                options.OnlyInvalid logical = false
                 options.Frames = ':'
             end
 
@@ -345,37 +346,45 @@ classdef Trial < handle
             index_data = zeros(pos_size, 0);
 %            time_data = zeros(this.getPositionDataSize(), 0);
             valid_flag = zeros(pos_size, 0);
+            reasoning = repmat({''}, pos_size, 1);
             coords_data = zeros(7, 3, 0);
             currentIndex = 0;
 
             fprintf('[RTON] getFrameData(): Collecting Position Data \n');
             posData = this.getPositionData(1:pos_size);
             for ii = 1:pos_size
-                if options.OnlyValid && ~posData(ii).getValidity(), continue; end
+                validity = posData(ii).getValidity();
+                if (options.OnlyValid && ~validity) || (options.OnlyInvalid && validity), continue; end
                 currentIndex = currentIndex + 1;
                 temp = posData(ii).getFrameData();
                 coords_data(:,:,currentIndex) = temp.Coordinates;
                 index_data(currentIndex) = temp.Index;
 %                time_data(i) = temp.Time;
                 valid_flag(currentIndex) = temp.Valid;
+                reasoning{currentIndex} = temp.Reasoning;
             end
-            if options.OnlyValid
+
+            if options.OnlyValid || options.OnlyInvalid
                 index_data = nonzeros(index_data);
 %                time_data = nonzeros(time_data);
                 coords_data = coords_data(:,:,1:currentIndex);
-                valid_flag = nonzeros(valid_flag);
+                if options.OnlyValid, valid_flag = nonzeros(valid_flag); 
+                elseif options.OnlyInvalid, valid_flag = zeros(length(valid_flag)-nonzeros(valid_flag)); end
+                reasoning(cellfun('isempty', reasoning)) = [];
             end
 
             out1.FrameIndex = index_data;
 %            out1.time_data = time_data';
             out1.FrameCoordinates = coords_data;
             out1.FrameValidity = valid_flag;
+            out1.FrameValidityReason = reasoning;
         end
         
         function out1 = getDataStruct(this, options)
             arguments (Input)
                 this Trial
                 options.OnlyValid logical = true
+                options.OnlyInvalid logical = false
                 options.EthOutput logical = true
                 options.AccOutput logical = true
                 options.PositionData
@@ -390,8 +399,7 @@ classdef Trial < handle
             out1.VideoPath = this.VideoPath;
             out1.Name = this.Name;
 
-            fprintf('[RTON] getDataStruct(): Collecting Position Data \n');
-            out1.PositionData = this.getFrameData(OnlyValid=options.OnlyValid);
+            out1.PositionData = this.getFrameData(OnlyValid=options.OnlyValid, OnlyInvalid = options.OnlyInvalid);
             out1.ArenaData = this.getArenaData.getArenaCoordinates();
 
             if(options.EthOutput)

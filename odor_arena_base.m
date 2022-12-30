@@ -1,5 +1,4 @@
 clear variables; clc
-
 cd('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data');
 import RealTimeOdorNavigation/RealTimeOdorNavigation.*
 dataset = RealTimeOdorNavigation();
@@ -8,19 +7,120 @@ save('C:\Users\girelab\MATLAB_DATA\Lane_test-12-23.mat', 'dataset', '-v7.3');
 imshow(dataset.BackgroundData, gray);
 
 %%
-trialNum = 1;
-validFrames = dataset.getDataForTrials(trialNum, OnlyValid=true, EthOutput=false, AccOutput=false);
+sz = [137 12];
+varTypes = ["uint16","datetime","uint16","double","double","double","double","double","double","double","double","double"];
+varNames = ["Index #","Date","Subject ID","Total Frames","Total Valid","% Valid","Total Invalid","% Invalid","Due to Likelihood","% Likelihood","Due to Region","% Region"];
+stat_table = table('Size',sz,'VariableTypes',varTypes,'VariableNames',varNames);
+% fig = uifigure;
+% uit = uitable(fig);
+% uit.Data = stat_table;
+% uit.ColumnSortable = true;
+% uit.ColumnEditable = [false false true];
+% uit.Position = [20 20 uit.Extent(3) uit.Extent(4)];
 
-frames = validFrames.PositionData.FrameIndex(round(length(validFrames.PositionData.FrameIndex)*0.25):round(length(validFrames.PositionData.FrameIndex)*0.75));
-frames = sort(randsample(frames(1:end),round(length(frames)*0.05)));
+for trialNumb = 1:137
+%     uit.DisplayData;
+    allFrames = dataset.getDataForTrials(trialNumb, OnlyValid=false, OnlyInvalid=false, EthOutput=false, AccOutput=false);
+    t_Frames = length(allFrames.PositionData.FrameIndex);
 
-angles = dataset.TrialDataset(trialNum).getAngleForFrames("Neck", "Nose", frames(1:end));
-coords = dataset.TrialDataset(trialNum).getCoordsForFrames(frames, Port=true);
+    validFrames = dataset.getDataForTrials(trialNumb, OnlyValid=true, OnlyInvalid=false, EthOutput=false, AccOutput=false);
+    t_Valid = length(validFrames.PositionData.FrameIndex);
+    p_valid = round(t_Valid/t_Frames * 100, 1);
+
+    invalidFrames = dataset.getDataForTrials(trialNumb, OnlyValid=false, OnlyInvalid=true, EthOutput=false, AccOutput=false);
+    likelihood_frames = invalidFrames.PositionData.FrameIndex(strcmp(invalidFrames.PositionData.FrameValidityReason,'likelihood'));
+    region_frames = invalidFrames.PositionData.FrameIndex(strcmp(invalidFrames.PositionData.FrameValidityReason,'region'));
+    t_Invalid = length(invalidFrames.PositionData.FrameIndex);
+    p_invalid = round(t_Invalid/t_Frames * 100, 1);
+    n_Likelihood = length(likelihood_frames);
+    p_likelihood = round(n_Likelihood/t_Frames * 100, 1);
+    n_Region = length(region_frames);
+    p_region = round(n_Region/t_Frames * 100, 1);
+    
+    stat_table(trialNumb,:) = {trialNumb, allFrames.Date, allFrames.SubjectID, t_Frames, t_Valid, p_valid, t_Invalid, p_invalid, n_Likelihood, p_likelihood, n_Region, p_region};
+end
+save('C:\Users\girelab\MATLAB_DATA\Lane_analysis_12-26.mat', 'stat_table', '-v7.3');
+
 %%
-vid_images = dataset.getImagesForFramesInTrial(trialNum, frames(1:end));
+trialNum = [13 16 18 20 28 29 41 42 56 64 69 83 88 104 105 106 118 130];
+validFrames = dataset.getDataForTrials(trialNum, OnlyValid=true, OnlyInvalid=false, EthOutput=false, AccOutput=false);
 
+for ii = 1:length(trialNum)
+    fprintf('[RTON] Processing Data for Trial %i (#%i)\n', ii, trialNum(ii));
+    frames = validFrames(ii).PositionData.FrameIndex(:);
+    perc_frames = round(length(frames)*0.05);
+    if(perc_frames > 50), perc_frames = 50; end
+    frames = sort(randsample(frames(1:end),perc_frames));
+
+    % angles = dataset.TrialDataset(trialNum).getAngleForFrames("Neck", "Nose", frames(1:end));
+    coords = dataset.TrialDataset(trialNum(ii)).getCoordsForFrames(frames, Port=false);
+    vid_images = dataset.getImagesForFramesInTrial(trialNum(ii), frames(1:end));
+    save(strcat("C:\\Users\\girelab\\2022.12.06_Tariq-Lane\\2022_Accuracy-Datasets\\Lane_trial_",num2str(trialNum(ii)),".mat"),"vid_images","coords","frames",'-v7.3');
+end
+
+%%
+% .mat file:
+    % coords(ii) - 1:6 ; 1,2
+    % vid_images(ii).Frame
+    % vid_images(ii).Image
+% new vars
+    % validity(ii):   0 = correct
+    %                       1 = incorrect coord
+    %                       2 = port interference
+    %                       3 = body coord out-of-region
+
+trial = 15;
+trialNum = [16 18 20 28 29 41 42 56 64 69 83 104 105 106 118];
+validity = zeros(length(vid_images), 0);
+figure('WindowState','maximized');
+set(gcf,'Units','pixels');
+
+for zz = 1:length(vid_images)
+    hold off
+    imagesc(vid_images(zz).Image);
+    title(strcat(int2str(vid_images(zz).Frame), " (",int2str(zz),")"));
+    axis image
+    axis tight
+    hold on
+
+    plot(coords(1,1,zz), coords(1,2,zz), '.');
+    plot(coords(2,1,zz), coords(2,2,zz), '.');
+    plot(coords(3,1,zz), coords(3,2,zz), '.');
+    plot(coords(4,1,zz), coords(4,2,zz), '.');
+    plot(coords(5,1,zz), coords(5,2,zz), '.');
+    plot(coords(6,1,zz), coords(6,2,zz), '.');
+    plot([CameraFrame.INSET, CameraFrame.INSET],[0, 256],'-');
+    plot([CameraFrame.WIDTH - CameraFrame.INSET, CameraFrame.WIDTH - CameraFrame.INSET],[0, 256],'-');
+    figure(gcf);
+
+    waitfor(gcf,'CurrentCharacter');
+    switch uint8(get(gcf,'CurrentCharacter'))
+        case 97, validity(zz) = 0;
+        case 115, validity(zz) = 1;
+        case 100, validity(zz) = 2;
+        case 102, validity(zz) = 3;
+        case 122, zz = zz - 2;
+    end
+    set(gcf,'CurrentCharacter','p');
+    pause(.3);
+end
+save(strcat("C:\\Users\\girelab\\2022.12.06_Tariq-Lane\\2022_Accuracy-Datasets\\Lane_trial_",num2str(trialNum(trial)),".mat"),"validity",'-append');
+close all
+
+%%
+trialNum = [16 18 20 28 29 41 42 56 64 69 83 104 105 106 118];
+fileName = strcat("C:\\Users\\girelab\\2022.12.06_Tariq-Lane\\2022_Accuracy-Datasets\\Lane_trial_",num2str(trialNum(:)),".mat");
+validity_mat = zeros(15,50);
+
+%%
+for t = 1:15
+    load(fileName(t), 'validity');
+    sz = numel(validity);
+    validity_mat(t,1:sz) = validity(1,1:sz);
+end
+
+%%
 Trial.saveData(dataset.TrialDataset(trialNum), 'frames', frames);
-Trial.saveData(dataset.TrialDataset(trialNum), 'angles', angles);
 
 for ii = 1:numel(vid_images)
     [nRows, ~, ~] = size(vid_images(ii).Image);
@@ -30,7 +130,6 @@ for ii = 1:numel(vid_images)
 
     figure, set(gcf,'Units','pixels');
     image(vid_images(ii).Image);
-
     axis image
     hold on
     title(vid_images(ii).Frame);

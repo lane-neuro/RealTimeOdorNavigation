@@ -69,6 +69,16 @@ classdef Camera < handle
             likelihoods(5) = this.Body.getLikelihood();
             likelihoods(6) = this.Tailbase.getLikelihood();
         end
+
+        function [x_min, x_max, y_min, y_max] = getBoxSize(this)
+            points = this.getAllPoints();
+            x = points(:,1);
+            y = points(:,2);
+            x_min = min(x);
+            x_max = max(x);
+            y_min = min(y);
+            y_max = max(y);
+        end
         
         %% Part Get Methods
         function [x, y, lh] = getNose(this), [x, y, lh] = this.Nose.getCoord(); end

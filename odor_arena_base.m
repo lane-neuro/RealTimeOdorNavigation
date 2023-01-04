@@ -1,6 +1,7 @@
 clear variables; clc
 cd('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data');
 import RealTimeOdorNavigation/RealTimeOdorNavigation.*
+import RealTimeOdorNavigation/deps/INI_Config/IniConfig.m
 dataset = RealTimeOdorNavigation();
 
 save('C:\Users\girelab\MATLAB_DATA\Lane_test-12-23.mat', 'dataset', '-v7.3');

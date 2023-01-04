@@ -9,6 +9,7 @@ classdef RealTimeOdorNavigation < handle
     properties
         TrialDataset Trial
         BackgroundData double
+        ProjectPath char
     end
     methods
         function obj = RealTimeOdorNavigation(in1, ~)
@@ -16,15 +17,19 @@ classdef RealTimeOdorNavigation < handle
                 if isstruct(in1)
                     fprintf('[RTON] Loading Trials from Dataset File\n');
                     obj.TrialDataset = in1.TrialDataset;
+                    obj.BackgroundData = in1.BackgroundData;
+                    obj.ProjectPath = in1.ProjectPath;
                 end
             elseif nargin == 1
                 in_size = length(in1);
                 total = 1:in_size;
                 in1_str = in1(total(mod(total,2)~=0));
                 in1_str2 = in1(total(mod(total,2)==0));
+                [path,~,~] = fileparts(in1_str{1});
+                obj.ProjectPath = strcat(path,'\MATLAB_DATA');
+                cd(obj.ProjectPath);
 
                 fprintf('[RTON] Number of Trials Being Processed: %i\n', in_size/2);
-                tic
                 d_set(in_size/2) = Trial();
 
                 parfor ii = 1:in_size/2
@@ -32,7 +37,6 @@ classdef RealTimeOdorNavigation < handle
                     fprintf('[RTON] ----- Trial Iteration [ %i ] Processed -----\n', ii);
                 end
                 obj.TrialDataset = d_set;
-                toc
                 
                 obj.BackgroundData = zeros(256, 564);
                 for jj = 1:numel(obj.TrialDataset)
@@ -42,13 +46,13 @@ classdef RealTimeOdorNavigation < handle
 
             else
                 fprintf('[RTON] Novel Dataset Analysis..\n');
-                prevFolder = pwd;
-                cd('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data');
                 [file, path] = uigetfile('*.csv;*.mat', 'MultiSelect', 'on');
                 if iscell(file), [~, nFiles] = size(file); else, [nFiles, ~] = size(file); end
                 if nFiles == 0
                     fprintf('[RTON] User cancelled file selection.');
                 else
+                    obj.ProjectPath = strcat(path{1},'\MATLAB_DATA');
+                    cd(obj.ProjectPath);
                     if nFiles == 1
                         files = strings(nFiles*2, 0);
                         [path,name,ext] = fileparts(fullfile(path, file));
@@ -70,7 +74,6 @@ classdef RealTimeOdorNavigation < handle
                         obj = RealTimeOdorNavigation(files);
                     end
                 end
-                cd(prevFolder);
             end
         end
         
@@ -111,12 +114,18 @@ classdef RealTimeOdorNavigation < handle
             fprintf('[RTON] Saving Dataset..\n');
             s = struct;
             s.TrialDataset = obj.TrialDataset;
+            s.BackgroundData = obj.BackgroundData;
+            s.ProjectPath = obj.ProjectPath;
         end
 
         function obj = loadobj(s)
             if isstruct(s)
                 fprintf('[RTON] Loading Dataset..\n');
-                struct_out = struct('TrialDataset', s.TrialDataset);
+                struct_out = struct;
+                struct_out.TrialDataset = s.TrialDataset;
+                struct_out.BackgroundData = s.BackgroundData;
+                struct_out.ProjectPath = s.ProjectPath;
+                cd(struct_out.ProjectPath);
                 obj = RealTimeOdorNavigation(struct_out, 0);
             else
                 obj = s;

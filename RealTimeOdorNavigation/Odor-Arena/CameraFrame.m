@@ -4,6 +4,7 @@ classdef CameraFrame
         LEFT_INSET = 30             % pixels
         RIGHT_INSET = 30          % pixels
         WIDTH = 564                   % pixels
+        HEIGHT = 264                  % pixels
     end
     properties
         Cam_Index uint32

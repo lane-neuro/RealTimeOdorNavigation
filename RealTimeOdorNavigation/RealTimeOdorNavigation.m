@@ -1,4 +1,6 @@
 classdef RealTimeOdorNavigation < handle
+    % RealTimeOdorNavigation    This class serves as the base for RTON
+    % 
     properties (Constant, Hidden = true)
         % Crop Parameters
         X = 9
@@ -7,9 +9,9 @@ classdef RealTimeOdorNavigation < handle
         HEIGHT = 256
     end
     properties
-        TrialDataset Trial
-        BackgroundData double
-        ProjectPath char
+        TrialDataset Trial      % Array of Trial objects
+        BackgroundData double   % CMap of mean pixel representation of all Trial arenas
+        ProjectPath char        % Depicts project folder location on hard drive
     end
     methods
         function obj = RealTimeOdorNavigation(in1, ~)

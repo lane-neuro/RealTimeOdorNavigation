@@ -1,29 +1,54 @@
 classdef Arena < handle
+    % Arena    This class stores the Coordinates of the Trial's arena.
+    % 
+
     properties
-        TopLeft Coords
-        TopRight Coords
-        BottomLeft Coords
-        BottomRight Coords
-        Port Coords
+        TopLeft Coords          % Top Left Coordinate
+        TopRight Coords         % Top Right Coordinate
+        BottomLeft Coords       % Bottom Left Coordinate
+        BottomRight Coords      % Bottom Right Coordinate
+        Port Coords             % Port Coordinate
     end
     methods
-        function obj = Arena(arena_data)
-            if ~isstruct(arena_data)
-                obj.TopLeft = Coords(arena_data(1), arena_data(2));
-                obj.TopRight = Coords(arena_data(3), arena_data(4));
-                obj.BottomLeft = Coords(arena_data(5), arena_data(6));
-                obj.BottomRight = Coords(arena_data(7), arena_data(8));
-                obj.Port = Coords(arena_data(9), arena_data(10));
+        function obj = Arena(in1)
+            % ARENA  Constructor
+            %
+            %   USAGE
+            %       obj = Arena(in1)
+            %
+            %   INPUT PARAMETERS
+            %       in1     -   double matrix (size: 10) OR struct from MAT-file
+            %
+            %   OUTPUT PARAMETERS
+            %       obj     -   returns Arena obj
+
+            if isstruct(in1)
+                obj.TopLeft = in1.TopLeft;
+                obj.TopRight = in1.TopRight;
+                obj.BottomLeft = in1.BottomLeft;
+                obj.BottomRight = in1.BottomRight;
+                obj.Port = in1.Port;
             else
-                obj.TopLeft = arena_data.TopLeft;
-                obj.TopRight = arena_data.TopRight;
-                obj.BottomLeft = arena_data.BottomLeft;
-                obj.BottomRight = arena_data.BottomRight;
-                obj.Port = arena_data.Port;
+                obj.TopLeft = Coords(in1(1), in1(2));
+                obj.TopRight = Coords(in1(3), in1(4));
+                obj.BottomLeft = Coords(in1(5), in1(6));
+                obj.BottomRight = Coords(in1(7), in1(8));
+                obj.Port = Coords(in1(9), in1(10));
             end
         end
         
-        function out1 = getArenaCoordinates(this)
+        function coords = getArenaCoordinates(this)
+            % GETARENACOORDINATES  This function returns all Arena coordinates as a matrix
+            %
+            %   USAGE
+            %       coords = getArenaCoordinates(this)
+            %
+            %   INPUT PARAMETERS
+            %       this     -   Arena object
+            %
+            %   OUTPUT PARAMETERS
+            %       coords     -   returns Arena coordinates as [x y]
+
             x = zeros(0,5);
             y = zeros(0,5);
             
@@ -32,7 +57,7 @@ classdef Arena < handle
             [x(3), y(3)] = this.BottomLeft.getCoord();
             [x(4), y(4)] = this.BottomRight.getCoord();
             [x(5), y(5)] = this.Port.getCoord();
-            out1 = [x' y'];
+            coords = [x' y'];
         end
     end
     

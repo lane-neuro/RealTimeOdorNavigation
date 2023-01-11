@@ -41,11 +41,15 @@ classdef Trial < handle
             elseif nargin == 2
                 [~, tempName1, ~] = fileparts(in1);
                 [~, tempName2, ~] = fileparts(in2);
+                %tempName1 = lower(tempName1);
+                %tempName2 = lower(tempName2);
                 tempName1{1} = tempName1{1}(1:end-4);
-                tempName1 = extractBefore(tempName1, '_reencoded');
-                obj.Name = extractBefore(tempName2, '_reencoded');
-                obj.VideoPath = strcat(obj.Name, '_reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_filtered_labeled.mp4');
-                obj.TrialDate = datetime(char(extractBefore(tempName2, '-M')),'InputFormat','M-d-u-h-m a');
+                %tempName1 = extractBefore(tempName1, '_reencoded');
+                obj.Name = tempName1; % extractBefore(tempName1, '.avi');;;; _reencoded
+                obj.VideoPath = strcat(obj.Name, ...
+                    '_reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_labeled.mp4'); % _filtered
+                obj.TrialDate = datetime(char(extractBefore(tempName2, '-M')), ...
+                    'InputFormat','M-d-u-h-m a');
                 subStr = extractBetween(tempName2, "CB", "_");
                 obj.SubjectID = str2num(char(extractBefore(subStr, '-')));
                 obj.TrialNum = str2num(char(extractAfter(subStr, '-')));
@@ -53,10 +57,14 @@ classdef Trial < handle
                 bCheckDataDirectory(obj, obj.Name);
                 
                 fprintf("[RTON] Parsing Positional Data...\n");
-                [obj.PositionFile, obj.ArenaFile] = parsePositionData(obj, obj.Name, obj.Name, strcat(tempName2, '.csv'));
-
+                [obj.PositionFile, obj.ArenaFile] = parsePositionData(obj, ...
+                    obj.Name, obj.Name, strcat(tempName2, '.csv'));
+                
+                % if strfind: eth && file exist
                 fprintf("[RTON] Parsing Ethanol & Accelerometer Data...\n");
-                [obj.EthFile, obj.AccFile] = parseEthAccData(obj, obj.Name, obj.Name, strcat(tempName1, '.avi.dat'));
+                [obj.EthFile, obj.AccFile] = parseEthAccData(obj, ...
+                    obj.Name, obj.Name, strcat(tempName1, '.avi.dat'));
+                % else eth/acc data = null
 
                 fprintf("[RTON] Processing Field & Data Boundaries...\n");
                 obj.BackgroundData = calcFieldBounds(obj);
@@ -72,9 +80,16 @@ classdef Trial < handle
                 mkdir(name_in);
                 mkdir(name_in, 'images');
                 mkdir(name_in, 'saved_data');
-                copyfile(strcat('C:\\Users\\girelab\\2022.12.06_Tariq-Lane\\2022_plotted-videos_fast-quality\\', this.VideoPath), strcat(name_in, '\\', this.VideoPath)); 
+                % copyfile(strcat(['C:\\Users\\girelab\\2022.12.06_Tariq-Lane\\', ...
+                %     '2022_plotted-videos_fast-quality\\'], this.VideoPath), ...
+                %     strcat(name_in, '\\', this.VideoPath));
+                prevFolder = pwd;
+                cd ..\
+                copyfile(this.VideoPath, ...
+                    strcat('MATLAB_DATA\\', name_in, '\\', this.VideoPath));
                 fprintf('[RTON] Created Directory: %s\n', name_in);
                 out1 = false;
+                cd(prevFolder);
             end
         end
         
@@ -93,27 +108,40 @@ classdef Trial < handle
             cd(prevFolder);
         end
         
-        function [posout, arenaout] = parsePositionData(this, dir_in, filename_in, camfile_name)
-            [posout, existed] = loadDataFile(this, dir_in, strcat(Trial.PositionPrefix, filename_in));
-            [arenaout, ~] = loadDataFile(this, dir_in, strcat(Trial.ArenaPrefix, filename_in));
+        function [posout, arenaout] = parsePositionData(this, dir_in, ...
+                filename_in, camfile_name)
+            [posout, existed] = loadDataFile(this, dir_in, ...
+                strcat(Trial.PositionPrefix, filename_in));
+            [arenaout, ~] = loadDataFile(this, dir_in, ...
+                strcat(Trial.ArenaPrefix, filename_in));
             if ~existed
-                cameraData = csvread(camfile_name, 3, 0);
+                cameraData = csvread(strcat('..\\', camfile_name), 3, 0);
                 tempData = CameraFrame.empty(length(cameraData),0);
                 for z = 1:length(cameraData)
                     tempData(z) = CameraFrame(cameraData(z, 1)+1, cameraData(z, :));
                 end % camera data per frame
                 posout.positionData = tempData;
-                arena(1) = Arena([mode(cameraData(:, 23)) mode(cameraData(:,24)) mode(cameraData(:,26)) mode(cameraData(:,27)) mode(cameraData(:,29)) mode(cameraData(:,30)) mode(cameraData(:,32)) mode(cameraData(:,33)) mode(cameraData(:,20)) mode(cameraData(:,21))]);
+                points = 1:500;
+                arena(1) = Arena([median(cameraData(points, 23)) ...
+                    median(cameraData(points,24)) median(cameraData(points,26)) ...
+                    median(cameraData(points,27)) median(cameraData(points,29)) ...
+                    median(cameraData(points,30)) median(cameraData(points,32)) ...
+                    median(cameraData(points,33)) median(cameraData(points,20)) ...
+                    median(cameraData(points,21))]);
                 arenaout.arenaData = arena;
                 clear cameraData
             end
         end
         
-        function [ethout, accout] = parseEthAccData(this, dir_in, filename_in, ethaccdata_name)
-            [ethout, existed] = loadDataFile(this, dir_in, strcat(Trial.EthPrefix, filename_in));
-            [accout, ~] = loadDataFile(this, dir_in, strcat(Trial.AccPrefix, filename_in));
+        function [ethout, accout] = parseEthAccData(this, dir_in, ...
+                filename_in, ethaccdata_name)
+            [ethout, existed] = loadDataFile(this, dir_in, ...
+                strcat(Trial.EthPrefix, filename_in));
+            [accout, ~] = loadDataFile(this, dir_in, ...
+                strcat(Trial.AccPrefix, filename_in));
             if ~existed
-                ethaccData = fread(fopen(ethaccdata_name), 'float64','ieee-be');
+                ethaccData = fread(fopen(strcat('..\\', ethaccdata_name)), ...
+                    'float64','ieee-be');
                 n_ten = find(ethaccData==-500);
                 n_ten = n_ten(14:end);
                 frame_stamp = uint32(ethaccData(n_ten+2));
@@ -124,8 +152,10 @@ classdef Trial < handle
                 tempEth = ETH_Sensor.empty(length(ethData),0);
                 tempAcc = Accelerometer.empty(length(accData),0);
                 parfor ii = 1:length(ethData)
-                    tempEth(ii) = ETH_Sensor(ethData(ii), time_stamp(ii), frame_stamp(ii));
-                    tempAcc(ii) = Accelerometer(accData(ii, :), time_stamp(ii), frame_stamp(ii));
+                    tempEth(ii) = ETH_Sensor(ethData(ii), ...
+                        time_stamp(ii), frame_stamp(ii));
+                    tempAcc(ii) = Accelerometer(accData(ii, :), ...
+                        time_stamp(ii), frame_stamp(ii));
                 end
                 ethout.ethData = tempEth;
                 accout.accData = tempAcc;
@@ -183,10 +213,9 @@ classdef Trial < handle
             [~, size_out] = size(data_out);
         end
         
-        function out1 = getAllEthData(this, options)
+        function out1 = getAllEthData(this)
             arguments (Input)
                 this Trial
-                options.Time logical = false
             end
 
             fprintf('[RTON] getAllEthData(): Init \n');
@@ -194,17 +223,11 @@ classdef Trial < handle
             voltage = zeros(eth_size, 0);
             fprintf('[RTON] getAllEthData(): Collecting Ethanol Data \n');
 
-            if options.Time
-                time_data = zeros(eth_size, 0);
-                with_time = options.Time;
-                parfor ii = 1:eth_size
-                    [voltage(ii), time_data(ii)] = ethData(ii).getEthReading(Time=with_time);
-                end
-                out1 = [voltage' time_data'];
-            else
-                parfor ii = 1:eth_size, [voltage(ii)] = ethData(ii).getEthReading(); end
-                out1 = voltage';
+            time_data = zeros(eth_size, 0);
+            parfor ii = 1:eth_size
+                [time_data(ii), voltage(ii)] = ethData(ii).getEthReading();
             end
+            out1 = [time_data' voltage'];
         end
         
         %% Accelerometer Methods
@@ -213,10 +236,9 @@ classdef Trial < handle
             [~, size_out] = size(data_out); 
         end
         
-        function out1 = getAllAccelerometerData(this, options)
+        function out1 = getAllAccelerometerData(this)
             arguments (Input)
                 this Trial
-                options.Time logical = false
             end
 
             fprintf('[RTON] getAllAccelerometerData(): Init \n');
@@ -226,17 +248,11 @@ classdef Trial < handle
             z = zeros(acc_size, 0);
 
             fprintf('[RTON] getAllAccelerometerData(): Collecting Accelerometer Data \n');
-            if options.Time
-                time = zeros(acc_size, 0);
-                with_time = options.Time;
-                parfor ii = 1:acc_size
-                    [x(ii), y(ii), z(ii), time(ii)] = accData(ii).getAccReading(Time=with_time);
-                end
-                out1 = [x' y' z' time'];
-            else
-                parfor ii = 1:acc_size, [x(ii), y(ii), z(ii)] = accData(ii).getAccReading(); end
-                out1 = [x' y' z'];
+            time = zeros(acc_size, 0);
+            parfor ii = 1:acc_size
+                [time(ii), x(ii), y(ii), z(ii)] = accData(ii).getAccReading();
             end
+            out1 = [time' x' y' z'];
         end
         
         %% Position Data Methods
@@ -263,15 +279,18 @@ classdef Trial < handle
             with_port = options.Port;
             pos_data = options.PositionData;
             parfor ii = 1:length(frames)
-                out1(:,:,ii) = pos_data(ii).getFrameCoordinates(Likelihood=with_likelihood, Port=with_port);
+                out1(:,:,ii) = pos_data(ii).getFrameCoordinates( ...
+                    Likelihood=with_likelihood, Port=with_port);
             end
         end
         
         function out1 = getAngleForFrames(this, p1_name, p2_name, frames, options)
             arguments (Input)
                 this Trial
-                p1_name string {mustBeMember(p1_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
-                p2_name string {mustBeMember(p2_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                p1_name string {mustBeMember(p1_name,...
+                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                p2_name string {mustBeMember(p2_name,...
+                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
                 frames
                 options.PositionData = this.getPositionData(frames)
             end
@@ -311,7 +330,8 @@ classdef Trial < handle
                         videoLoaded = true;
                         cd images
                     end
-                    fprintf('[RTON] getImagesForFrames(): Saving frame [%i] image to images folder \n', frames(ii));
+                    fprintf(['[RTON] getImagesForFrames(): ' ...
+                        'Saving frame [%i] image to images folder \n'], frames(ii));
                     imwrite(video(:, :, :, frames(ii)), image_name);
                 end
                 imgs(ii).Frame = frames(ii);
@@ -357,7 +377,8 @@ classdef Trial < handle
             fprintf('[RTON] getFrameData(): Collecting Position Data \n');
             for ii = 1:pos_size
                 validity = pos_Data(ii).getValidity();
-                if (options.OnlyValid && ~validity) || (options.OnlyInvalid && validity), continue; end
+                if (options.OnlyValid && ~validity) || ...
+                        (options.OnlyInvalid && validity), continue; end
                 currentIndex = currentIndex + 1;
                 temp = pos_Data(ii).getFrameData();
                 coords_data(:,:,currentIndex) = temp.Coordinates;
@@ -372,7 +393,8 @@ classdef Trial < handle
 %                time_data = nonzeros(time_data);
                 coords_data = coords_data(:,:,1:currentIndex);
                 if options.OnlyValid, valid_flag = nonzeros(valid_flag); 
-                elseif options.OnlyInvalid, valid_flag = zeros(length(valid_flag)-nonzeros(valid_flag)); end
+                elseif options.OnlyInvalid, valid_flag = ...
+                        zeros(length(valid_flag)-nonzeros(valid_flag)); end
                 reasoning(cellfun('isempty', reasoning)) = [];
             end
 
@@ -402,17 +424,18 @@ classdef Trial < handle
             out1.VideoPath = this.VideoPath;
             out1.Name = this.Name;
 
-            out1.PositionData = this.getFrameData(OnlyValid=options.OnlyValid, OnlyInvalid = options.OnlyInvalid);
+            out1.PositionData = this.getFrameData(OnlyValid=options.OnlyValid, ...
+                OnlyInvalid = options.OnlyInvalid);
             out1.ArenaData = this.getArenaData.getArenaCoordinates();
 
             if(options.EthOutput)
                 fprintf('[RTON] getDataStruct(): Collecting Ethanol Sensor Data \n');
-                out1.EthData = this.getAllEthData(Time=true);
+                out1.EthData = this.getAllEthData();
             end
 
             if(options.AccOutput)
                 fprintf('[RTON] getDataStruct(): Collecting Accelerometer Data \n');
-                out1.AccData = this.getAllAccelerometerData(Time=true);
+                out1.AccData = this.getAllAccelerometerData();
             end
 
             fprintf('[RTON] getDataStruct(): Returning Data Struct \n');
@@ -424,7 +447,8 @@ classdef Trial < handle
         function saveData(this, name_in, data_in)
             prevFolder = pwd;
             cd(strcat(this.Name, '\saved_data'));
-            file_name = strcat(name_in, '_', string(datetime('now', 'Format', 'yyyy-MM-dd_HH.mm')), '_saved.mat');
+            file_name = strcat(name_in, '_', ...
+                string(datetime('now', 'Format', 'yyyy-MM-dd_HH.mm')), '_saved.mat');
             fprintf('[RTON] Saving Data to File: %s\n', file_name);
             mfile = matfile(file_name, 'Writable', true);
             mfile.(name_in) = data_in;

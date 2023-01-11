@@ -1,14 +1,15 @@
 clear variables; clc
-cd('C:\Users\girelab\2022.12.06_Tariq-Lane\2022_RTON-Data');
-import RealTimeOdorNavigation/RealTimeOdorNavigation.*
-import RealTimeOdorNavigation/deps/INI_Config/IniConfig.m
-dataset = RealTimeOdorNavigation();
 
-save('C:\Users\girelab\MATLAB_DATA\Lane_test-12-23.mat', 'dataset', '-v7.3');
-imshow(dataset.BackgroundData, gray);
+cd('C:\Users\girelab\2022.12.06_Tariq-Lane');
+import RealTimeOdorNavigation/RealTimeOdorNavigation.*
+% import RealTimeOdorNavigation/deps/INI_Config/IniConfig.m
+
+dataset = RealTimeOdorNavigation();
+save('dataset-1.10-unfiltered.mat', 'dataset', '-v7.3');
 
 %%
-sz = [137 12];
+nTrials = 1:15;
+sz = [length(nTrials) 12];
 varTypes = ["uint16","datetime","uint16","double","double","double","double","double","double","double","double","double"];
 varNames = ["Index #","Date","Subject ID","Total Frames","Total Valid","% Valid","Total Invalid","% Invalid","Due to Likelihood","% Likelihood","Due to Region","% Region"];
 stat_table = table('Size',sz,'VariableTypes',varTypes,'VariableNames',varNames);
@@ -19,7 +20,7 @@ stat_table = table('Size',sz,'VariableTypes',varTypes,'VariableNames',varNames);
 % uit.ColumnEditable = [false false true];
 % uit.Position = [20 20 uit.Extent(3) uit.Extent(4)];
 
-for trialNumb = 1:137
+for trialNumb = 1:length(nTrials)
 %     uit.DisplayData;
     allFrames = dataset.getDataForTrials(trialNumb, OnlyValid=false, OnlyInvalid=false, EthOutput=false, AccOutput=false);
     t_Frames = length(allFrames.PositionData.FrameIndex);
@@ -40,10 +41,10 @@ for trialNumb = 1:137
     
     stat_table(trialNumb,:) = {trialNumb, allFrames.Date, allFrames.SubjectID, t_Frames, t_Valid, p_valid, t_Invalid, p_invalid, n_Likelihood, p_likelihood, n_Region, p_region};
 end
-save('C:\Users\girelab\MATLAB_DATA\Lane_analysis_12-26.mat', 'stat_table', '-v7.3');
+save('Lane_analysis_1-10.mat', 'stat_table', '-v7.3');
 
 %%
-trialNum = [13 16 18 20 28 29 41 42 56 64 69 83 88 104 105 106 118 130];
+trialNum = 1:15; % [13 16 18 20 28 29 41 42 56 64 69 83 88 104 105 106 118 130];
 validFrames = dataset.getDataForTrials(trialNum, OnlyValid=true, OnlyInvalid=false, EthOutput=false, AccOutput=false);
 
 for ii = 1:length(trialNum)
@@ -56,7 +57,7 @@ for ii = 1:length(trialNum)
     % angles = dataset.TrialDataset(trialNum).getAngleForFrames("Neck", "Nose", frames(1:end));
     coords = dataset.TrialDataset(trialNum(ii)).getCoordsForFrames(frames, Port=false);
     vid_images = dataset.getImagesForFramesInTrial(trialNum(ii), frames(1:end));
-    save(strcat("C:\\Users\\girelab\\2022.12.06_Tariq-Lane\\2022_Accuracy-Datasets\\Lane_trial_",num2str(trialNum(ii)),".mat"),"vid_images","coords","frames",'-v7.3');
+    save(strcat("Lane_trial_",num2str(trialNum(ii)),".mat"),"vid_images","coords","frames",'-v7.3');
 end
 
 %%
@@ -66,15 +67,16 @@ end
     % vid_images(ii).Image
 % new vars
     % validity(ii):   0 = correct
-    %                       1 = incorrect coord
-    %                       2 = port interference
-    %                       3 = body coord out-of-region
+    %                 1 = incorrect coord
+    %                 2 = port interference
+    %                 3 = body coord out-of-region
 
 trial = 15;
-trialNum = [16 18 20 28 29 41 42 56 64 69 83 104 105 106 118];
+trialNum = 1:15; % [16 18 20 28 29 41 42 56 64 69 83 104 105 106 118];
 validity = zeros(length(vid_images), 0);
 figure('WindowState','maximized');
 set(gcf,'Units','pixels');
+set(groot,'defaultLineMarkerSize',20);
 
 for zz = 1:length(vid_images)
     hold off
@@ -90,8 +92,9 @@ for zz = 1:length(vid_images)
     plot(coords(4,1,zz), coords(4,2,zz), '.');
     plot(coords(5,1,zz), coords(5,2,zz), '.');
     plot(coords(6,1,zz), coords(6,2,zz), '.');
-    plot([CameraFrame.INSET, CameraFrame.INSET],[0, 256],'-');
-    plot([CameraFrame.WIDTH - CameraFrame.INSET, CameraFrame.WIDTH - CameraFrame.INSET],[0, 256],'-');
+    plot([CameraFrame.LEFT_INSET, CameraFrame.LEFT_INSET],[0, 256],'-');
+    plot([CameraFrame.WIDTH - CameraFrame.RIGHT_INSET, ...
+        CameraFrame.WIDTH - CameraFrame.RIGHT_INSET],[0, 256],'-');
     figure(gcf);
 
     waitfor(gcf,'CurrentCharacter');
@@ -105,12 +108,12 @@ for zz = 1:length(vid_images)
     set(gcf,'CurrentCharacter','p');
     pause(.3);
 end
-save(strcat("C:\\Users\\girelab\\2022.12.06_Tariq-Lane\\2022_Accuracy-Datasets\\Lane_trial_",num2str(trialNum(trial)),".mat"),"validity",'-append');
+save(strcat("Lane_trial_",num2str(trialNum(trial)),".mat"),"validity",'-append');
 close all
 
 %%
-trialNum = [16 18 20 28 29 41 42 56 64 69 83 104 105 106 118];
-fileName = strcat("C:\\Users\\girelab\\2022.12.06_Tariq-Lane\\2022_Accuracy-Datasets\\Lane_trial_",num2str(trialNum(:)),".mat");
+trialNum = 1:15;% [16 18 20 28 29 41 42 56 64 69 83 104 105 106 118];
+fileName = strcat("Lane_trial_",num2str(trialNum(:)),".mat");
 validity_mat = zeros(15,50);
 
 %%

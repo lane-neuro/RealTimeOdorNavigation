@@ -17,16 +17,15 @@ classdef Accelerometer < handle
             end
         end
         
-        function [x, y, z, time] = getAccReading(this, options)
+        function [time, x, y, z] = getAccReading(this)
             arguments (Input)
                 this Accelerometer
-                options.Time logical = false
             end
 
+            time = this.getAccTime();
             x = this.X;
             y = this.Y;
             z = this.Z;
-            if(options.Time), time = this.getAccTime(); end
         end
         
         function time = getAccTime(this), time = this.DAQ_Time; end

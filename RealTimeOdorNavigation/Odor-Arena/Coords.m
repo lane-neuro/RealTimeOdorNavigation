@@ -1,25 +1,41 @@
 classdef Coords
+    % This class holds coordinate data for RealTimeOdorNavigation
+    %
+
     properties
-        X double
-        Y double
-        Likelihood double
+        X double                        % x-axis value
+        Y double                        % y-axis value
+        Likelihood double               % DeepLabCut certainty evaluation
         isStatic logical
     end
     methods
         function obj = Coords(X_in, Y_in, Likelihood_in)
-            arguments
-                X_in double = 0
-                Y_in double = 0
-                Likelihood_in double = 0
+            % Creates and returns a Coords object
+            %
+            %   USAGE
+            %       obj = Coords(X_in, Y_in, Likelihood_in)
+            %
+            %   OUTPUT PARAMETERS
+            %       obj                 -   Coords object
+            %
+
+            arguments (Input)
+                X_in double = 0             % x-axis value
+                Y_in double = 0             % y-axis value
+                Likelihood_in double = 0    % DeepLabCut certainty evaluation
             end
+
             obj.X = X_in;
             obj.Y = Y_in;
-            if nargin == 2
+
+            if (nargin == 2)
                 obj.isStatic = true;
-            elseif nargin == 3
+
+            elseif (nargin == 3)
                 obj.isStatic = false;
                 obj.Likelihood = Likelihood_in;
             end
+
         end
         
         function x = getX(this), x = this.X; end
@@ -30,6 +46,21 @@ classdef Coords
         end
         
         function [x, y, likelihood] = getCoord(this)
+            % Creates and returns a RealTimeOdorNavigation object
+            %
+            %   USAGE
+            %       [x, y, likelihood] = this.getCoord()
+            %       [x, y, likelihood] = getCoord(this)
+            %
+            %   INPUT PARAMETERS
+            %       this                 -   Coords object
+            %
+            %   OUTPUT PARAMETERS
+            %       x                    
+            %       y                    
+            %       likelihood           -   DeepLabCut certainty evaluation
+            %
+
             x = this.getX();
             y = this.getY();
             likelihood = this.getLikelihood();

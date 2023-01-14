@@ -3,3 +3,6 @@
 _DATA/*
 low_likelihood_reasonings.txt
 data_validation.m
+deps/*
+RealTimeOdorNavigation_Hierarchy.*
+documentation.txt

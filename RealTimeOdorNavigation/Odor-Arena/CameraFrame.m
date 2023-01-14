@@ -29,11 +29,17 @@ classdef CameraFrame
         end
         
         %% Get Methods
-        function out1 = getFrameData(this)
+        function out1 = getSingleFrameData(this, options)
+            arguments (Input)
+                this CameraFrame
+                options.Likelihood logical = false
+                options.Port logical = false
+            end
             out1 = struct;
             out1.Index = this.getFrameIndex();
             out1.Time = this.getFrameTimestamp();
-            out1.Coordinates = this.getFrameCoordinates(Likelihood=true, Port=true);
+            out1.Coordinates = this.getFrameCoordinates(Likelihood=options.Likelihood, ...
+                Port=options.Port);
             [out1.Valid, out1.Reasoning] = this.getValidity();
         end
         

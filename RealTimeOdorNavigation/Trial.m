@@ -60,7 +60,7 @@ classdef Trial < handle
                 [obj.PositionFile, obj.ArenaFile] = parsePositionData(obj, ...
                     obj.Name, obj.Name, strcat(tempName2, '.csv'));
                 
-                % if strfind: eth && file exist
+                % if strfind("eth") && file exist
                 fprintf("[RTON] Parsing Ethanol & Accelerometer Data...\n");
                 [obj.EthFile, obj.AccFile] = parseEthAccData(obj, ...
                     obj.Name, obj.Name, strcat(tempName1, '.avi.dat'));
@@ -80,9 +80,6 @@ classdef Trial < handle
                 mkdir(name_in);
                 mkdir(name_in, 'images');
                 mkdir(name_in, 'saved_data');
-                % copyfile(strcat(['C:\\Users\\girelab\\2022.12.06_Tariq-Lane\\', ...
-                %     '2022_plotted-videos_fast-quality\\'], this.VideoPath), ...
-                %     strcat(name_in, '\\', this.VideoPath));
                 prevFolder = pwd;
                 cd ..\
                 copyfile(this.VideoPath, ...
@@ -120,6 +117,7 @@ classdef Trial < handle
                 for z = 1:length(cameraData)
                     tempData(z) = CameraFrame(cameraData(z, 1)+1, cameraData(z, :));
                 end % camera data per frame
+
                 posout.positionData = tempData;
                 points = 1:500;
                 arena(1) = Arena([median(cameraData(points, 23)) ...
@@ -170,79 +168,91 @@ classdef Trial < handle
                 options.PositionData = this.PositionFile.positionData;
             end
 
+            pos_data = options.PositionData;
             frame_data = CameraFrame.empty(length(iFrames),0);
             for ii = 1:length(iFrames)
-                frame_data(ii) = options.PositionData(iFrames(ii));
+                frame_data(ii) = pos_data(iFrames(ii));
             end
-            pos_data = options.PositionData;
         end
         
         function [eth_data, raw_data] = getEthData(this, indices, options)
             arguments (Input)
                 this Trial
                 indices
-                options.EthData = this.EthFile.ethData;
+                options.EthData = this.EthFile.ethData
             end
 
+            raw_data = options.EthData;
             eth_data = ETH_Sensor.empty(length(indices),0);
             for ii = 1:length(indices)
-                eth_data(ii) = options.EthData(indices(ii));
+                eth_data(ii) = raw_data(indices(ii));
             end
-            raw_data = options.EthData;
         end
         
         function [acc_data, raw_data] = getAccData(this, indices, options)
             arguments (Input)
                 this Trial
                 indices
-                options.AccData = this.AccFile.accData;
+                options.AccData = this.AccFile.accData
             end
 
+            raw_data = options.AccData;
             acc_data = Accelerometer.empty(length(indices),0);
             for ii = 1:length(indices)
-                acc_data(ii) = options.AccData(indices(ii));
+                acc_data(ii) = raw_data(indices(ii));
             end
-            raw_data = options.AccData;
         end
         
         function dataout = getArenaData(this), dataout = this.ArenaFile.arenaData; end
         
         %% Ethanol Sensor Methods
-        function [size_out, data_out] = getEthDataSize(this)
-            data_out = this.EthFile.ethData;
+        function [size_out, data_out] = getEthDataSize(this, options)
+            arguments (Input)
+                this Trial
+                options.EthData = this.EthFile.ethData
+            end
+
+            data_out = options.EthData;
             [~, size_out] = size(data_out);
         end
         
-        function out1 = getAllEthData(this)
+        function out1 = getAllEthData(this, options)
             arguments (Input)
                 this Trial
+                options.EthData = this.EthFile.ethData
             end
 
             fprintf('[RTON] getAllEthData(): Init \n');
-            [eth_size, ethData] = getEthDataSize(this);
+            [eth_size, ethData] = getEthDataSize(this, EthData=options.EthData);
             voltage = zeros(eth_size, 0);
             fprintf('[RTON] getAllEthData(): Collecting Ethanol Data \n');
 
-            time_data = zeros(eth_size, 0);
+            time = zeros(eth_size, 0);
             parfor ii = 1:eth_size
-                [time_data(ii), voltage(ii)] = ethData(ii).getEthReading();
+                [time(ii), voltage(ii)] = ethData(ii).getEthReading();
             end
-            out1 = [time_data' voltage'];
+            out1 = [time' voltage'];
         end
         
         %% Accelerometer Methods
-        function [size_out, data_out] = getAccDataSize(this)
-            data_out = this.AccFile.accData;
+        function [size_out, data_out] = getAccDataSize(this, options)
+            arguments (Input)
+                this Trial
+                options.AccData = this.AccFile.accData;
+            end
+
+            data_out = options.AccData;
             [~, size_out] = size(data_out); 
         end
         
-        function out1 = getAllAccelerometerData(this)
+        function s_out = getAllAccelerometerData(this, options)
             arguments (Input)
                 this Trial
+                options.AccData = this.AccFile.accData
             end
 
             fprintf('[RTON] getAllAccelerometerData(): Init \n');
-            [acc_size, accData] = getAccDataSize(this);
+            [acc_size, accData] = getAccDataSize(this, AccData=options.AccData);
             x = zeros(acc_size, 0);
             y = zeros(acc_size, 0);
             z = zeros(acc_size, 0);
@@ -252,16 +262,21 @@ classdef Trial < handle
             parfor ii = 1:acc_size
                 [time(ii), x(ii), y(ii), z(ii)] = accData(ii).getAccReading();
             end
-            out1 = [time' x' y' z'];
+            s_out = [time' x' y' z'];
         end
         
         %% Position Data Methods
-        function [size_out, data_out] = getPositionDataSize(this)
-            data_out = this.PositionFile.positionData;
+        function [size_out, data_out] = getPositionDataSize(this, options)
+            arguments (Input)
+                this Trial
+                options.PositionData = this.PositionFile.positionData
+            end
+
+            data_out = options.PositionData;
             [~, size_out] = size(data_out); 
         end
         
-        function out1 = getCoordsForFrames(this, frames, options)
+        function s_out = getCoordsForFrames(this, frames, options)
             arguments (Input)
                 this Trial
                 frames
@@ -274,12 +289,12 @@ classdef Trial < handle
             if ~options.Likelihood, columns_in = 2; else, columns_in = 3; end
             if ~options.Port, rows_in = 6; else, rows_in = 7; end
 
-            out1 = zeros(rows_in, columns_in, length(frames));
+            s_out = zeros(rows_in, columns_in, length(frames));
             with_likelihood = options.Likelihood;
             with_port = options.Port;
             pos_data = options.PositionData;
             parfor ii = 1:length(frames)
-                out1(:,:,ii) = pos_data(ii).getFrameCoordinates( ...
+                s_out(:,:,ii) = pos_data(ii).getFrameCoordinates( ...
                     Likelihood=with_likelihood, Port=with_port);
             end
         end
@@ -287,9 +302,9 @@ classdef Trial < handle
         function out1 = getAngleForFrames(this, p1_name, p2_name, frames, options)
             arguments (Input)
                 this Trial
-                p1_name string {mustBeMember(p1_name,...
+                p1_name string {mustBeMember(p1_name, ...
                     ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
-                p2_name string {mustBeMember(p2_name,...
+                p2_name string {mustBeMember(p2_name, ...
                     ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
                 frames
                 options.PositionData = this.getPositionData(frames)
@@ -356,86 +371,119 @@ classdef Trial < handle
         end
         
         %% Aggregation Methods
-        function out1 = getFrameData(this, options)
+        function [s_out, pos_Data] = getFrameData(this, options)
             arguments (Input)
                 this Trial
-                options.OnlyValid logical = true
-                options.OnlyInvalid logical = false
-                options.Frames = ':'
+                options.Valid_Type string {mustBeMember(options.Valid_Type, ...
+                    ["valid","invalid","all"])} = "valid"
+                options.Validity_Verbose logical = false
+                options.PositionData = this.PositionFile.positionData
+                options.Port logical = false
+                options.Likelihood logical = false
             end
 
             fprintf('[RTON] getFrameData(): Init \n');
-            out1 = struct;
-            [pos_size, pos_Data] = this.getPositionDataSize();
+            [pos_size, pos_Data] = ...
+                this.getPositionDataSize(PositionData=options.PositionData);
             index_data = zeros(pos_size, 0);
-%            time_data = zeros(this.getPositionDataSize(), 0);
-            valid_flag = zeros(pos_size, 0);
-            reasoning = repmat({''}, pos_size, 1);
-            coords_data = zeros(7, 3, 0);
+
+            if (options.Validity_Verbose)
+                valid_flag = zeros(pos_size, 0); 
+                reasoning = repmat({''}, pos_size, 1);
+            end
+
+            nC_Rows = 6;
+            nC_Cols = 2;
+            if (options.Port), nC_Rows = 7; end
+            if (options.Likelihood), nC_Cols = 3; end
+
+            coords_data = zeros(nC_Rows, nC_Cols, 0);
             currentIndex = 0;
 
             fprintf('[RTON] getFrameData(): Collecting Position Data \n');
             for ii = 1:pos_size
-                validity = pos_Data(ii).getValidity();
-                if (options.OnlyValid && ~validity) || ...
-                        (options.OnlyInvalid && validity), continue; end
+                temp = pos_Data(ii).getSingleFrameData(Likelihood=options.Likelihood, ...
+                    Port=options.Port);
+                validity = temp.Valid;
+                if ((options.Valid_Type == "valid" && ~validity) || ...
+                        (options.Valid_Type == "invalid" && validity)), continue; end
                 currentIndex = currentIndex + 1;
-                temp = pos_Data(ii).getFrameData();
                 coords_data(:,:,currentIndex) = temp.Coordinates;
                 index_data(currentIndex) = temp.Index;
-%                time_data(i) = temp.Time;
-                valid_flag(currentIndex) = temp.Valid;
-                reasoning{currentIndex} = temp.Reasoning;
+                
+                if(options.Validity_Verbose)
+                    valid_flag(currentIndex) = validity;
+                    reasoning{currentIndex} = temp.Reasoning;
+                end
             end
 
-            if options.OnlyValid || options.OnlyInvalid
+            if (options.Valid_Type ~= "all")
                 index_data = nonzeros(index_data);
-%                time_data = nonzeros(time_data);
                 coords_data = coords_data(:,:,1:currentIndex);
-                if options.OnlyValid, valid_flag = nonzeros(valid_flag); 
-                elseif options.OnlyInvalid, valid_flag = ...
-                        zeros(length(valid_flag)-nonzeros(valid_flag)); end
-                reasoning(cellfun('isempty', reasoning)) = [];
+                if (options.Validity_Verbose) 
+                    switch(options.Valid_Type)
+                        case "valid", valid_flag = nonzeros(valid_flag);
+                        case "invalid", valid_flag = ...
+                                zeros(length(valid_flag) - nonzeros(valid_flag));
+                    end
+
+                    reasoning(cellfun('isempty', reasoning)) = [];
+                end
             end
 
-            out1.FrameIndex = index_data;
-%            out1.time_data = time_data';
-            out1.FrameCoordinates = coords_data;
-            out1.FrameValidity = valid_flag;
-            out1.FrameValidityReason = reasoning;
+            s_out = struct;
+            s_out.FrameIndex = index_data;
+            s_out.FrameCoordinates = coords_data;
+            if (options.Validity_Verbose)
+                s_out.FrameValidity = valid_flag;
+                s_out.FrameValidityReason = reasoning;
+            end
         end
         
-        function out1 = getDataStruct(this, options)
+        function s_out = getDaqStruct(this, options)
             arguments (Input)
                 this Trial
-                options.OnlyValid logical = true
-                options.OnlyInvalid logical = false
-                options.EthOutput logical = true
-                options.AccOutput logical = true
-                options.PositionData
-                options.EthData
-                options.AccData
+                options.EthData = this.EthFile.ethData
+                options.AccData = this.AccFile.accData
+            end
+
+            e_data = this.getAllEthData(EthData=options.EthData);
+            a_data = this.getAllAccelerometerData(AccData=options.AccData);
+
+            s_out = [e_data(:,1:2) a_data(:,2:end)];
+        end
+
+        function s_out = getDataStruct(this, options)
+            arguments (Input)
+                this Trial
+                options.Valid_Type string {mustBeMember(options.Valid_Type, ...
+                    ["valid","invalid","all"])} = "valid"
+                options.DAQ_Output logical = true
+                options.PositionData = this.PositionFile.positionData
+                options.Validity_Verbose logical = false
+                options.Port logical = false
+                options.Likelihood logical = false
+            end
+
+            arguments (Output)
+                s_out struct
             end
 
             fprintf('[RTON] getDataStruct(): Init \n');
-            out1 = struct;
-            out1.Date = this.TrialDate;
-            out1.SubjectID = this.SubjectID;
-            out1.VideoPath = this.VideoPath;
-            out1.Name = this.Name;
+            s_out.TrialDate = this.TrialDate;
+            s_out.SubjectID = this.SubjectID;
+            s_out.VideoPath = this.VideoPath;
+            s_out.Name = this.Name;
 
-            out1.PositionData = this.getFrameData(OnlyValid=options.OnlyValid, ...
-                OnlyInvalid = options.OnlyInvalid);
-            out1.ArenaData = this.getArenaData.getArenaCoordinates();
+            [s_out.PositionData, ~] = this.getFrameData(Valid_Type=options.Valid_Type, ...
+                PositionData=options.PositionData, ...
+                Validity_Verbose=options.Validity_Verbose, Port=options.Port, ...
+                Likelihood=options.Likelihood);
+            s_out.ArenaData = this.getArenaData.getArenaCoordinates();
 
-            if(options.EthOutput)
-                fprintf('[RTON] getDataStruct(): Collecting Ethanol Sensor Data \n');
-                out1.EthData = this.getAllEthData();
-            end
-
-            if(options.AccOutput)
-                fprintf('[RTON] getDataStruct(): Collecting Accelerometer Data \n');
-                out1.AccData = this.getAllAccelerometerData();
+            if(options.DAQ_Output)
+                fprintf('[RTON] getDataStruct(): Collecting DAQ Data\n');
+                s_out.DaqData = this.getDaqStruct();
             end
 
             fprintf('[RTON] getDataStruct(): Returning Data Struct \n');

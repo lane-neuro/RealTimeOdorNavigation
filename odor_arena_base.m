@@ -22,14 +22,14 @@ stat_table = table('Size',sz,'VariableTypes',varTypes,'VariableNames',varNames);
 
 for trialNumb = 1:length(nTrials)
 %     uit.DisplayData;
-    allFrames = dataset.getDataForTrials(trialNumb, OnlyValid=false, OnlyInvalid=false, EthOutput=false, AccOutput=false);
+    allFrames = dataset.getDataForTrials(trialNumb, Valid_Type="all", DAQ_Output=false);
     t_Frames = length(allFrames.PositionData.FrameIndex);
 
-    validFrames = dataset.getDataForTrials(trialNumb, OnlyValid=true, OnlyInvalid=false, EthOutput=false, AccOutput=false);
+    validFrames = dataset.getDataForTrials(trialNumb, Valid_Type="valid", DAQ_Output=false);
     t_Valid = length(validFrames.PositionData.FrameIndex);
     p_valid = round(t_Valid/t_Frames * 100, 1);
 
-    invalidFrames = dataset.getDataForTrials(trialNumb, OnlyValid=false, OnlyInvalid=true, EthOutput=false, AccOutput=false);
+    invalidFrames = dataset.getDataForTrials(trialNumb, Valid_Type="invalid", DAQ_Output=false);
     likelihood_frames = invalidFrames.PositionData.FrameIndex(strcmp(invalidFrames.PositionData.FrameValidityReason,'likelihood'));
     region_frames = invalidFrames.PositionData.FrameIndex(strcmp(invalidFrames.PositionData.FrameValidityReason,'region'));
     t_Invalid = length(invalidFrames.PositionData.FrameIndex);
@@ -39,13 +39,13 @@ for trialNumb = 1:length(nTrials)
     n_Region = length(region_frames);
     p_region = round(n_Region/t_Frames * 100, 1);
     
-    stat_table(trialNumb,:) = {trialNumb, allFrames.Date, allFrames.SubjectID, t_Frames, t_Valid, p_valid, t_Invalid, p_invalid, n_Likelihood, p_likelihood, n_Region, p_region};
+    stat_table(trialNumb,:) = {trialNumb, allFrames.TrialDate, allFrames.SubjectID, t_Frames, t_Valid, p_valid, t_Invalid, p_invalid, n_Likelihood, p_likelihood, n_Region, p_region};
 end
 save('Lane_analysis_1-10.mat', 'stat_table', '-v7.3');
 
 %%
 trialNum = 1:15; % [13 16 18 20 28 29 41 42 56 64 69 83 88 104 105 106 118 130];
-validFrames = dataset.getDataForTrials(trialNum, OnlyValid=true, OnlyInvalid=false, EthOutput=false, AccOutput=false);
+validFrames = dataset.getDataForTrials(trialNum, Valid_Type="valid", DAQ_Output=false);
 
 for ii = 1:length(trialNum)
     fprintf('[RTON] Processing Data for Trial %i (#%i)\n', ii, trialNum(ii));
@@ -55,7 +55,7 @@ for ii = 1:length(trialNum)
     frames = sort(randsample(frames(1:end),perc_frames));
 
     % angles = dataset.TrialDataset(trialNum).getAngleForFrames("Neck", "Nose", frames(1:end));
-    coords = dataset.TrialDataset(trialNum(ii)).getCoordsForFrames(frames, Port=false);
+    coords = dataset.TrialDataset(trialNum(ii)).getCoordsForFrames(frames);
     vid_images = dataset.getImagesForFramesInTrial(trialNum(ii), frames(1:end));
     save(strcat("Lane_trial_",num2str(trialNum(ii)),".mat"),"vid_images","coords","frames",'-v7.3');
 end

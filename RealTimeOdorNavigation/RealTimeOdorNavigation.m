@@ -12,7 +12,7 @@ classdef RealTimeOdorNavigation < handle
     properties
         TrialDataset Trial      % array of Trial objects
         BackgroundData double   % CMap of mean pixel representation of all Trial arenas
-        ProjectPath char        % depicts project folder location on hard drive
+        ProjectPath char        % project folder path on hard drive
     end
 
     methods
@@ -123,25 +123,35 @@ classdef RealTimeOdorNavigation < handle
             %
 
             arguments (Input)
-                this RealTimeOdorNavigation             % RealTimeOdorNavigation object
-                iTrials                                 % array or range of Trial indices
-                options.OnlyValid logical = true        % only return valid frames
-                options.OnlyInvalid logical = false     % only return invalid frames
-                options.EthOutput logical = true        % include EthSensor data
-                options.AccOutput logical = true        % include Accelerometer data
+                % RealTimeOdorNavigation object
+                this RealTimeOdorNavigation    
+                
+                % array or range of Trial indices
+                iTrials                                 
+                
+                % process "valid" (default), "invalid", or "all" frame types
+                options.Valid_Type string {mustBeMember(options.Valid_Type, ...
+                    ["valid","invalid","all"])} = "valid"
+
+                options.DAQ_Output logical = true           % include DAQ data output
+                
+                options.Validity_Verbose logical = false    % validity output per frame
+                options.Port logical = false                % port coords per frame
+                options.Likelihood logical = false          % likelihood output per frame
             end
             
             nTrials = length(iTrials);
-            data_out = repmat(struct('Date', {}, 'SubjectID', {}, 'VideoPath', {}, ...
-                'Name', {}, 'PositionData', struct, 'ArenaData', [], ...
-                'EthData', struct, 'AccData', struct), nTrials, 1);
-            if (~options.EthOutput), data_out = rmfield(data_out,'EthData'); end
-            if (~options.AccOutput), data_out = rmfield(data_out,'AccData'); end
+
+            data_out = repmat(struct('TrialDate', {}, 'SubjectID', {}, ...
+                'VideoPath', {}, 'Name', {}, 'PositionData', struct, 'ArenaData', [], ...
+                'DaqData', struct), nTrials, 1);
+            if (~options.DAQ_Output), data_out = rmfield(data_out,'DaqData'); end
 
             for ii = 1 : nTrials
                 data_out(ii) = this.TrialDataset(iTrials(ii)).getDataStruct( ...
-                    OnlyValid = options.OnlyValid, OnlyInvalid = options.OnlyInvalid, ...
-                    EthOutput = options.EthOutput, AccOutput = options.AccOutput);
+                    Valid_Type=options.Valid_Type, DAQ_Output=options.DAQ_Output, ...
+                    Validity_Verbose=options.Validity_Verbose, Port=options.Port, ...
+                    Likelihood=options.Likelihood);
             end
         end
         

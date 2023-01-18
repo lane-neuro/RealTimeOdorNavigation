@@ -22,10 +22,6 @@ classdef RealTimeOdorNavigation < handle
             %   USAGE
             %       obj = RealTimeOdorNavigation()
             %
-            %   INPUT PARAMETERS
-            %       in1                 -   (ignore) struct loaded from MAT-file
-            %       ~                   -   (ignore)
-            %
             %   OUTPUT PARAMETERS
             %       obj                 -   RealTimeOdorNavigation object
             %
@@ -121,23 +117,31 @@ classdef RealTimeOdorNavigation < handle
             %   USAGE
             %       data_out = this.getDataForTrials(iTrials, options)
             %
+            %   INPUT PARAMETERS
+            %       this                    -   RealTimeOdorNavigation object
+            %       iTrials                 -   array or range of trial indices
+            %
+            %       optional arguments:
+            %           Valid_Type          -   frame types: "valid", "invalid", or "all"
+            %               (default: "valid")
+            %           DAQ_Output          -   include DAQ data output
+            %               (default: true)
+            %           Validity_Verbose    -   validity per frame output
+            %               (default: false)
+            %           Port                -   port coords per frame
+            %               (default: false)
+            %           Likelihood          -   likelihood per frame output
+            %               (default: false)
 
             arguments (Input)
-                % RealTimeOdorNavigation object
                 this RealTimeOdorNavigation    
-                
-                % array or range of Trial indices
                 iTrials                                 
-                
-                % process "valid" (default), "invalid", or "all" frame types
                 options.Valid_Type string {mustBeMember(options.Valid_Type, ...
                     ["valid","invalid","all"])} = "valid"
-
-                options.DAQ_Output logical = true           % include DAQ data output
-                
-                options.Validity_Verbose logical = false    % validity output per frame
-                options.Port logical = false                % port coords per frame
-                options.Likelihood logical = false          % likelihood output per frame
+                options.DAQ_Output logical = true
+                options.Validity_Verbose logical = false
+                options.Port logical = false
+                options.Likelihood logical = false
             end
             
             nTrials = length(iTrials);
@@ -161,14 +165,61 @@ classdef RealTimeOdorNavigation < handle
             %   USAGE
             %       imgs = this.getImagesForFramesInTrial(iTrials, iFrames)
             %
+            %   INPUT PARAMETERS
+            %       this                    -   RealTimeOdorNavigation object
+            %       iTrials                 -   array or range of trial indices
+            %       iFrames                 -   array or range of frame indices
+            %
 
             arguments (Input)
-                this RealTimeOdorNavigation             % RealTimeOdorNavigation object
-                iTrials                                 % array or range of Trial indices
-                iFrames                                 % array or range of frame indices
+                this RealTimeOdorNavigation
+                iTrials
+                iFrames
             end
 
             imgs = this.TrialDataset(iTrials).getImagesForFrames(iFrames);
+        end
+
+        function t_Out = filterTrialset(this, filter_type, data_in, options)
+            % FILTERTRIALSET   Filters & returns n-sized matrix of Trial objects 
+            %
+            %   USAGE
+            %       t_Out = this.filterTrialset(filter_type, data_in, options)
+            %
+            %   INPUT PARAMETERS
+            %       this                -   RealTimeOdorNavigation object
+            %       filter_type         -   filter types:   "byDate", "bySubjectNo"
+            %       data_in             -   must be of type:
+            %                                   uint16: subject id number
+            %                                   datetime: datetime matrix [earliest last]
+            %
+            %       optional arguments:
+            %           trials_in       -   pass existing matrix of trials as seed
+            %               (default: all trials in dataset)
+
+            arguments (Input)
+                this RealTimeOdorNavigation
+                filter_type string ...
+                    {mustBeMember(filter_type, ...
+                    ["byDate", ...
+                    "bySubjectNo" ...
+                    ])}
+                data_in {mustBeA(data_in, ...           
+                    ["double", ...
+                    "datetime", ...
+                    ])}
+                options.trials_in(:,1) {mustBeA(options.trials_in, ["Trial"])} ...
+                    = this.TrialDataset
+            end
+
+            t_set = options.trials_in;
+            switch(filter_type)
+                case "byDate"
+                    tf = isbetween([t_set.TrialDate], data_in(1), data_in(2));
+                case "bySubjectNo"
+                    tf = [t_set.SubjectID] == data_in;
+            end
+            t_Out = t_set(tf);
         end
 
     end

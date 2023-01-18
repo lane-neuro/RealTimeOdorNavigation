@@ -5,6 +5,12 @@ classdef Trial < handle
         ArenaPrefix = 'arena_'
         EthPrefix = 'eth_'
         AccPrefix = 'acc_'
+        DATE_FORMAT = 'M-d-u-h-m a'
+        BIN_FILE_EXT = '.avi.dat'
+        POS_FILE_EXT = '.csv'
+        IMAGE_EXT = '.png'
+        VIDEO_FILE_SUFFIX = ...
+            '_reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_labeled.mp4' % _filtered
     end
     properties (Hidden = true)
         PositionFile
@@ -46,10 +52,9 @@ classdef Trial < handle
                 tempName1{1} = tempName1{1}(1:end-4);
                 %tempName1 = extractBefore(tempName1, '_reencoded');
                 obj.Name = tempName1; % extractBefore(tempName1, '.avi');;;; _reencoded
-                obj.VideoPath = strcat(obj.Name, ...
-                    '_reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_labeled.mp4'); % _filtered
+                obj.VideoPath = strcat(obj.Name, Trial.VIDEO_FILE_SUFFIX);
                 obj.TrialDate = datetime(char(extractBefore(tempName2, '-M')), ...
-                    'InputFormat','M-d-u-h-m a');
+                    'InputFormat', Trial.DATE_FORMAT);
                 subStr = extractBetween(tempName2, "CB", "_");
                 obj.SubjectID = str2num(char(extractBefore(subStr, '-')));
                 obj.TrialNum = str2num(char(extractAfter(subStr, '-')));
@@ -58,12 +63,12 @@ classdef Trial < handle
                 
                 fprintf("[RTON] Parsing Positional Data...\n");
                 [obj.PositionFile, obj.ArenaFile] = parsePositionData(obj, ...
-                    obj.Name, obj.Name, strcat(tempName2, '.csv'));
+                    obj.Name, obj.Name, strcat(tempName2, Trial.POS_FILE_EXT));
                 
                 % if strfind("eth") && file exist
                 fprintf("[RTON] Parsing Ethanol & Accelerometer Data...\n");
                 [obj.EthFile, obj.AccFile] = parseEthAccData(obj, ...
-                    obj.Name, obj.Name, strcat(tempName1, '.avi.dat'));
+                    obj.Name, obj.Name, strcat(tempName1, Trial.ETH_ACC_EXT));
                 % else eth/acc data = null
 
                 fprintf("[RTON] Processing Field & Data Boundaries...\n");
@@ -336,7 +341,7 @@ classdef Trial < handle
             videoLoaded = false;
             imgs = zeros(length(frames), 0);
             for ii = 1:length(frames)
-                image_name = strcat(num2str(frames(ii)), '__', this.Name, '.png');
+                image_name = strcat(num2str(frames(ii)), '__', this.Name, Trial.IMAGE_EXT);
                 if ~isfile(image_name)
                     if ~videoLoaded
                         fprintf('[RTON] getImagesForFrames(): Loading Trial Video \n');

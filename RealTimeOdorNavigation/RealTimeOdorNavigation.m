@@ -9,10 +9,14 @@ classdef RealTimeOdorNavigation < handle
         HEIGHT = 256
     end % Crop Parameters
 
+    properties (Hidden = true)
+        IniFile IniConfig       % config file for RTON instance/project
+        ProjectPath char        % project folder path on hard drive
+    end
+
     properties
         TrialDataset Trial      % array of Trial objects
         BackgroundData double   % CMap of mean pixel representation of all Trial arenas
-        ProjectPath char        % project folder path on hard drive
     end
 
     methods
@@ -29,12 +33,15 @@ classdef RealTimeOdorNavigation < handle
             %       Do not pass input to RealTimeOdorNavigation(); Load a saved project
             %       by dragging the previously saved .mat file into the Workspace.
 
+            import RealTimeOdorNavigation/deps/IniConfig.*
             if (nargin == 2)
                 if isstruct(in1)
                     fprintf('[RTON] Loading Trials from Dataset File\n');
+                    obj.IniFile = in1.IniFile;
+                    obj.IniFile = obj.loadConfig();
+                    obj.ProjectPath = in1.ProjectPath;
                     obj.TrialDataset = in1.TrialDataset;
                     obj.BackgroundData = in1.BackgroundData;
-                    obj.ProjectPath = in1.ProjectPath;
                 end
 
             elseif (nargin == 1)
@@ -46,6 +53,7 @@ classdef RealTimeOdorNavigation < handle
                 [path, ~, ~] = fileparts(in1_str{1});
                 obj.ProjectPath = strcat(path, '\MATLAB_DATA');
                 cd(obj.ProjectPath);
+                obj.IniFile = obj.createConfig();
 
                 fprintf('[RTON] Number of Trials Being Processed: %i\n', in_size / 2);
                 d_set(in_size / 2) = Trial();
@@ -75,6 +83,8 @@ classdef RealTimeOdorNavigation < handle
                     obj.ProjectPath = strcat(path(1:end),'\MATLAB_DATA');
                     mkdir(obj.ProjectPath);
                     cd(obj.ProjectPath);
+
+                    obj.IniFile = obj.createConfig();
 
                     if (nFiles == 1)
                         files = strings(nFiles * 2, 0);
@@ -158,6 +168,27 @@ classdef RealTimeOdorNavigation < handle
                     Likelihood=options.Likelihood);
             end
         end
+
+        function vel_out = getSpeedForFramesInTrials(this, iTrials, iFrames)
+            % GETSPEEDFORFRAMESINTRIALS   Returns velocity array for frame(s) in Trial(s)
+            %
+            %   USAGE
+            %       vel_out = this.getSpeedForFramesInTrials(iTrials, iFrames)
+            %
+            %   INPUT PARAMETERS
+            %       this                    -   RealTimeOdorNavigation object
+            %       iTrials                 -   array or range of trial indices
+            %       iFrames                 -   array or range of frame indices
+            %
+
+            arguments (Input)
+                this RealTimeOdorNavigation
+                iTrials
+                iFrames
+            end
+
+            vel_out = this.TrialDataset(iTrials).calcFrameVelocity(iFrames);
+        end
         
         function imgs = getImagesForFramesInTrial(this, iTrials, iFrames)
             % GETIMAGESFORFRAMESINTRIAL   Returns image struct for frame(s) in Trial(s)
@@ -222,6 +253,49 @@ classdef RealTimeOdorNavigation < handle
             t_Out = t_set(tf);
         end
 
+        function [ini_out] = loadConfig(this)
+            % LOADCONFIG   Helper function to load an .ini file
+            %
+            %   USAGE
+            %       ini_out = this.loadConfig()
+            %
+            %   INPUT PARAMETERS
+            %       this                -   RealTimeOdorNavigation object
+
+            f_name = strcat(Trial.ConfigPrefix, 'RTON.ini');
+            key_names = {'PROJECT_PATH'};
+            ini_out = IniConfig();
+
+            bExists = ini_out.ReadFile(f_name);
+            if (~bExists), ini_out = this.createConfig(); end
+            sections = ini_out.GetSections();
+            [this.ProjectPath, ~] = ini_out.GetValues(sections{1}, key_names{1});
+            cd(this.ProjectPath);
+        end
+
+        function [ini_out] = createConfig(this)
+            % CREATECONFIG   Helper function to create an .ini file
+            %
+            %   USAGE
+            %       ini_out = this.createConfig()
+            %
+            %   INPUT PARAMETERS
+            %       this                -   RealTimeOdorNavigation object
+
+            prevFolder = pwd;
+            cd(this.ProjectPath);
+
+            f_name = strcat(Trial.ConfigPrefix, 'RTON.ini');
+
+            ini_out = IniConfig();
+            ini_out.AddSections('File-Naming & Organization');
+            key_names = {'PROJECT_PATH'};
+            key_values = {this.ProjectPath};
+            ini_out.AddKeys('File-Naming & Organization', key_names, key_values);
+            ini_out.WriteFile(f_name);
+            cd(prevFolder);
+        end
+
     end
     
     %% Save, Load
@@ -230,6 +304,7 @@ classdef RealTimeOdorNavigation < handle
             fprintf('[RTON] Saving Dataset..\n');
             s = struct;
             s.TrialDataset = obj.TrialDataset;
+            s.IniFile = obj.IniFile;
             s.BackgroundData = obj.BackgroundData;
             s.ProjectPath = obj.ProjectPath;
         end
@@ -239,10 +314,12 @@ classdef RealTimeOdorNavigation < handle
                 fprintf('[RTON] Loading Dataset..\n');
                 struct_out = struct;
                 struct_out.TrialDataset = s.TrialDataset;
+                struct_out.IniFile = s.IniFile;
                 struct_out.BackgroundData = s.BackgroundData;
                 struct_out.ProjectPath = s.ProjectPath;
                 cd(struct_out.ProjectPath);
                 obj = RealTimeOdorNavigation(struct_out, 0);
+                obj.loadConfig();
             else
                 obj = s;
             end

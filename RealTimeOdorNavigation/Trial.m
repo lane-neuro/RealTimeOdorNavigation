@@ -5,14 +5,15 @@ classdef Trial < handle
         ArenaPrefix = 'arena_'
         EthPrefix = 'eth_'
         AccPrefix = 'acc_'
+    end
+
+    properties (Hidden = true)
         DATE_FORMAT = 'M-d-u-h-m a'
         BIN_FILE_EXT = '.avi.dat'
         POS_FILE_EXT = '.csv'
         IMAGE_EXT = '.png'
         VIDEO_FILE_SUFFIX = ...
             '_reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_labeled.mp4' % _filtered
-    end
-    properties (Hidden = true)
         PositionFile
         ArenaFile
         EthFile
@@ -37,12 +38,14 @@ classdef Trial < handle
                     obj.EthFile = in1.EthFile;
                     obj.AccFile = in1.AccFile;
                     obj.IniFile = in1.IniFile;
+
                     obj.TrialDate = in1.TrialDate;
                     obj.TrialNum = in1.TrialNum;
                     obj.SubjectID = in1.SubjectID;
                     obj.Name = in1.Name;
                     obj.VideoPath = in1.VideoPath;
                     obj.BackgroundData = in1.BackgroundData;
+                    obj.loadConfig();
                 end
             elseif nargin == 2
                 [~, tempName1, ~] = fileparts(in1);
@@ -52,7 +55,7 @@ classdef Trial < handle
                 tempName1{1} = tempName1{1}(1:end-4);
                 %tempName1 = extractBefore(tempName1, '_reencoded');
                 obj.Name = tempName1; % extractBefore(tempName1, '.avi');;;; _reencoded
-                obj.VideoPath = strcat(obj.Name, Trial.VIDEO_FILE_SUFFIX);
+                obj.VideoPath = strcat(obj.Name, obj.VIDEO_FILE_SUFFIX);
                 obj.TrialDate = datetime(char(extractBefore(tempName2, '-M')), ...
                     'InputFormat', Trial.DATE_FORMAT);
                 subStr = extractBetween(tempName2, "CB", "_");
@@ -85,6 +88,9 @@ classdef Trial < handle
                 mkdir(name_in);
                 mkdir(name_in, 'images');
                 mkdir(name_in, 'saved_data');
+
+                this.IniFile = this.loadConfig();
+
                 prevFolder = pwd;
                 cd ..\
                 copyfile(this.VideoPath, ...
@@ -95,6 +101,50 @@ classdef Trial < handle
             end
         end
         
+        function [ini_out] = loadConfig(this)
+            % LOADCONFIG   Helper function to load an .ini file
+            %
+            %   USAGE
+            %       ini_out = this.loadConfig()
+            %
+            %   INPUT PARAMETERS
+            %       this                -   RealTimeOdorNavigation object
+
+            cd(this.Name);
+            f_name = strcat(Trial.ConfigPrefix, this.Name, '.ini');
+            key_names = {'DATE_FORMAT', 'BIN_FILE_EXT', 'POS_FILE_EXT', 'IMAGE_EXT'};
+            ini_out = IniConfig();
+
+            bExists = ini_out.ReadFile(f_name);
+            if (~bExists), ini_out = this.createConfig(); end
+            sections = ini_out.GetSections();
+            [this.DATE_FORMAT, ~] = ini_out.GetValues(sections{1}, key_names{1});
+            [this.BIN_FILE_EXT, ~] = ini_out.GetValues(sections{1}, key_names{2});
+            [this.POS_FILE_EXT, ~] = ini_out.GetValues(sections{1}, key_names{3});
+            [this.IMAGE_EXT, ~] = ini_out.GetValues(sections{1}, key_names{4});
+            cd ..\
+        end
+
+        function [ini_out] = createConfig(this)
+            % CREATECONFIG   Helper function to create an .ini file
+            %
+            %   USAGE
+            %       ini_out = this.createConfig()
+            %
+            %   INPUT PARAMETERS
+            %       this                -   RealTimeOdorNavigation object
+
+            f_name = strcat(Trial.ConfigPrefix, this.Name, '.ini');
+
+            ini_out = IniConfig();
+            ini_out.AddSections('File-Naming & Organization');
+            key_names = {'DATE_FORMAT', 'BIN_FILE_EXT', 'POS_FILE_EXT', 'IMAGE_EXT'};
+            key_values = {this.DATE_FORMAT, this.BIN_FILE_EXT, this.POS_FILE_EXT, ...
+                this.IMAGE_EXT};
+            ini_out.AddKeys('File-Naming & Organization', key_names, key_values);
+            ini_out.WriteFile(f_name);
+        end
+
         function [dataout, successout] = loadDataFile(~, dir_in, filename_in)
             prevFolder = pwd;
             cd(dir_in);
@@ -279,6 +329,48 @@ classdef Trial < handle
 
             data_out = options.PositionData;
             [~, size_out] = size(data_out); 
+        end
+
+        function v_out = calcFrameVelocity(this, frames, options)
+            % CALCFRAMEVELOCITY   Calculates & returns instantaneous velocity for given
+            %                     frames (pixels/second)
+            %
+            %   USAGE
+            %       v_out = this.getVelocityBetweenFrames(frames)
+            %
+            %   INPUT PARAMETERS
+            %       this                -   Trial object
+            %       frames              -   array of frame indices
+            %       
+            %       optional arguments:
+            %           PositionData    -   pass position data variable (saves exec time)
+            %   
+            %   OUTPUT PARAMETERS
+            %       v_out               -   array of velocity calculations
+
+            arguments (Input)
+                this Trial
+                frames
+                options.PositionData = this.getPositionData(frames)
+            end
+
+            v_out = zeros(length(frames)-1,1);
+
+
+            for ii = 1:length(frames)-1
+                p1 = options.PositionData(ii).getFrameCoordinates();
+                p2 = options.PositionData(ii+1).getFrameCoordinates();
+
+                x1 = p1(5,1);
+                y1 = p1(5,2);
+                x2 = p2(5,1);
+                y2 = p2(5,2);
+                time_diff = (cast(options.PositionData(ii+1).getFrameIndex(),"double") ...
+                    / 60) - (cast(options.PositionData(ii).getFrameIndex(), "double") ...
+                    / 60); % unit: s
+                position_traveled = sqrt((x2 - x1)^2 + (y2 - y1)^2);
+                v_out(ii) = position_traveled / time_diff;
+            end
         end
         
         function s_out = getCoordsForFrames(this, frames, options)
@@ -539,6 +631,7 @@ classdef Trial < handle
                 load_trial.Name = s.Name;
                 load_trial.VideoPath = s.VideoPath;
                 load_trial.BackgroundData = s.BackgroundData;
+                load_trial.loadConfig();
                 obj = load_trial;
             else
                 obj = s;

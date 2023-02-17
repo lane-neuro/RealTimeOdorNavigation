@@ -19,7 +19,10 @@ classdef CameraFrame
                 obj.CameraData = Camera(cameradata);
                 likelihoods = obj.CameraData.getAllLikelihoods(Port=false);
                 for z = 1:length(likelihoods)
-                    if(likelihoods(z) < CameraFrame.TOLERANCE), obj.isValid = false; break; end
+                    if(likelihoods(z) < CameraFrame.TOLERANCE)
+                        obj.isValid = false; 
+                        break;
+                    end
                 end
             else % loaded from matfile
                 obj.Cam_Timestamp = cameradata.Cam_Timestamp;

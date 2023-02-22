@@ -10,11 +10,11 @@ classdef RealTimeOdorNavigation < handle
     end % Crop Parameters
 
     properties (Hidden = true)
-        IniFile IniConfig       % config file for RTON instance/project
         ProjectPath char        % project folder path on hard drive
     end
 
     properties
+        IniFile IniConfig       % config file for RTON instance/project
         TrialDataset Trial      % array of Trial objects
         BackgroundData double   % CMap of mean pixel representation of all Trial arenas
     end
@@ -43,7 +43,6 @@ classdef RealTimeOdorNavigation < handle
                     obj.TrialDataset = in1.TrialDataset;
                     obj.BackgroundData = in1.BackgroundData;
                 end
-
             elseif (nargin == 1)
                 in_size = length(in1);
                 total = 1 : in_size;
@@ -64,13 +63,13 @@ classdef RealTimeOdorNavigation < handle
                 end
                 obj.TrialDataset = d_set;
                 
-                obj.BackgroundData = zeros(256, 564);
-                nTrials = numel(obj.TrialDataset);
-                for jj = 1 : nTrials
-                    obj.BackgroundData = obj.BackgroundData + ...
-                        obj.TrialDataset(jj).BackgroundData;
-                end
-                obj.BackgroundData = obj.BackgroundData / nTrials;
+%                 obj.BackgroundData = zeros(256, 564);
+%                 nTrials = numel(obj.TrialDataset);
+%                 for jj = 1 : nTrials
+%                     obj.BackgroundData = obj.BackgroundData + ...
+%                         obj.TrialDataset(jj).BackgroundData;
+%                 end
+%                 obj.BackgroundData = obj.BackgroundData / nTrials;
 
             else
                 fprintf('[RTON] Novel Dataset Analysis..\n');
@@ -96,7 +95,7 @@ classdef RealTimeOdorNavigation < handle
 
                         elseif (isequal(ext, '.csv'))
                             files(1) = strcat(path, '\', ...
-                                extractBefore(name,'_reencoded'), '.avi.dat');
+                                extractBefore(name,'DLC'), '.avi.dat');
                             files(2) = strcat(path, '\', name, ext);
                             obj = RealTimeOdorNavigation(files);
                         end
@@ -108,7 +107,7 @@ classdef RealTimeOdorNavigation < handle
                                 file(1, jj))));
                             files(jj * 2) = strcat(path, '\', name, ext);
                             files((jj * 2) - 1) = strcat(path, '\', ...
-                                extractBefore(name,'_reencoded'), '.avi.dat');
+                                extractBefore(name,'DLC'), '.avi.dat');
                         end
 
                         obj = RealTimeOdorNavigation(files);
@@ -162,6 +161,7 @@ classdef RealTimeOdorNavigation < handle
             if (~options.DAQ_Output), data_out = rmfield(data_out,'DaqData'); end
 
             for ii = 1 : nTrials
+                fprintf('[RTON] Collecting Requested Data (%i/%i)\n', ii, nTrials);
                 data_out(ii) = this.TrialDataset(iTrials(ii)).getDataStruct( ...
                     Valid_Type=options.Valid_Type, DAQ_Output=options.DAQ_Output, ...
                     Validity_Verbose=options.Validity_Verbose, Port=options.Port, ...
@@ -303,26 +303,28 @@ classdef RealTimeOdorNavigation < handle
         function s = saveobj(obj)
             fprintf('[RTON] Saving Dataset..\n');
             s = struct;
-            s.TrialDataset = obj.TrialDataset;
             s.IniFile = obj.IniFile;
+            s.TrialDataset = obj.TrialDataset;
             s.BackgroundData = obj.BackgroundData;
             s.ProjectPath = obj.ProjectPath;
         end
 
         function obj = loadobj(s)
             if isstruct(s)
-                fprintf('[RTON] Loading Dataset..\n');
                 struct_out = struct;
-                struct_out.TrialDataset = s.TrialDataset;
                 struct_out.IniFile = s.IniFile;
-                struct_out.BackgroundData = s.BackgroundData;
                 struct_out.ProjectPath = s.ProjectPath;
                 cd(struct_out.ProjectPath);
+                struct_out.TrialDataset = s.TrialDataset;
+                struct_out.BackgroundData = s.BackgroundData;
                 obj = RealTimeOdorNavigation(struct_out, 0);
                 obj.loadConfig();
             else
+                cd(s.ProjectPath);
                 obj = s;
+                obj.loadConfig();
             end
+            fprintf('[RTON] Dataset Loaded\n');
         end
     end
 end

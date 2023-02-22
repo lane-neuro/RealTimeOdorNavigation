@@ -1,11 +1,11 @@
 clear variables; clc
 
-cd('C:\Users\girelab\2022.12.06_Tariq-Lane');
+cd('D:\Misc-Trial-Vetting-Dataset');
 import RealTimeOdorNavigation/RealTimeOdorNavigation.*
 % import RealTimeOdorNavigation/deps/INI_Config/IniConfig.m
 
 dataset = RealTimeOdorNavigation();
-save('dataset-1.10-unfiltered.mat', 'dataset', '-v7.3');
+save('extra-trials_2.22-unfiltered.mat', 'dataset', '-v7.3');
 
 %%
 nTrials = 1:15;

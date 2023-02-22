@@ -13,12 +13,11 @@ classdef Trial < handle
         POS_FILE_EXT = '.csv'
         IMAGE_EXT = '.png'
         VIDEO_FILE_SUFFIX = ...
-            '_reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_labeled.mp4' % _filtered
+            '.avi' % _reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_labeled_filtered
         PositionFile
         ArenaFile
         EthFile
         AccFile
-        IniFile
     end
     properties
         TrialDate datetime
@@ -26,6 +25,7 @@ classdef Trial < handle
         SubjectID uint16
         Name char
         VideoPath char
+        IniFile IniConfig
         BackgroundData double
     end
     methods
@@ -57,7 +57,7 @@ classdef Trial < handle
                 obj.Name = tempName1; % extractBefore(tempName1, '.avi');;;; _reencoded
                 obj.VideoPath = strcat(obj.Name, obj.VIDEO_FILE_SUFFIX);
                 obj.TrialDate = datetime(char(extractBefore(tempName2, '-M')), ...
-                    'InputFormat', Trial.DATE_FORMAT);
+                    'InputFormat', obj.DATE_FORMAT);
                 subStr = extractBetween(tempName2, "CB", "_");
                 obj.SubjectID = str2num(char(extractBefore(subStr, '-')));
                 obj.TrialNum = str2num(char(extractAfter(subStr, '-')));
@@ -66,16 +66,16 @@ classdef Trial < handle
                 
                 fprintf("[RTON] Parsing Positional Data...\n");
                 [obj.PositionFile, obj.ArenaFile] = parsePositionData(obj, ...
-                    obj.Name, obj.Name, strcat(tempName2, Trial.POS_FILE_EXT));
+                    obj.Name, obj.Name, strcat(tempName2, obj.POS_FILE_EXT));
                 
                 % if strfind("eth") && file exist
                 fprintf("[RTON] Parsing Ethanol & Accelerometer Data...\n");
                 [obj.EthFile, obj.AccFile] = parseEthAccData(obj, ...
-                    obj.Name, obj.Name, strcat(tempName1, Trial.ETH_ACC_EXT));
+                    obj.Name, obj.Name, strcat(tempName1, obj.BIN_FILE_EXT));
                 % else eth/acc data = null
 
-                fprintf("[RTON] Processing Field & Data Boundaries...\n");
-                obj.BackgroundData = calcFieldBounds(obj);
+%                fprintf("[RTON] Processing Field & Data Boundaries...\n");
+%                obj.BackgroundData = calcFieldBounds(obj);
 
                 fprintf("[RTON] Trial Loaded: %s\n", obj.Name);
             end
@@ -89,8 +89,6 @@ classdef Trial < handle
                 mkdir(name_in, 'images');
                 mkdir(name_in, 'saved_data');
 
-                this.IniFile = this.loadConfig();
-
                 prevFolder = pwd;
                 cd ..\
                 copyfile(this.VideoPath, ...
@@ -99,6 +97,8 @@ classdef Trial < handle
                 out1 = false;
                 cd(prevFolder);
             end
+            
+            this.IniFile = this.loadConfig();
         end
         
         function [ini_out] = loadConfig(this)
@@ -620,18 +620,17 @@ classdef Trial < handle
             if isstruct(s)
                 fprintf('[RTON] Loading Trial: %s\n', s.Name);
                 load_trial = Trial();
-                load_trial.PositionFile = s.PositionFile;
-                load_trial.ArenaFile = s.ArenaFile;
-                load_trial.EthFile = s.EthFile;
-                load_trial.AccFile = s.AccFile;
-                load_trial.IniFile = s.IniFile;
                 load_trial.TrialDate = s.TrialDate;
                 load_trial.TrialNum = s.TrialNum;
                 load_trial.SubjectID = s.SubjectID;
                 load_trial.Name = s.Name;
                 load_trial.VideoPath = s.VideoPath;
                 load_trial.BackgroundData = s.BackgroundData;
-                load_trial.loadConfig();
+                load_trial.PositionFile = s.PositionFile;
+                load_trial.ArenaFile = s.ArenaFile;
+                load_trial.EthFile = s.EthFile;
+                load_trial.AccFile = s.AccFile;
+                load_trial.IniFile = load_trial.loadConfig();
                 obj = load_trial;
             else
                 obj = s;

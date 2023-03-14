@@ -1,7 +1,7 @@
 classdef CameraFrame
     properties (Constant, Hidden = true)
         TOLERANCE = 0.95
-        LEFT_INSET = 30             % pixels
+        LEFT_INSET = 30             % pixels - originally 30
         RIGHT_INSET = 30            % pixels
         WIDTH = 564                 % pixels
         HEIGHT = 264                % pixels
@@ -78,7 +78,8 @@ classdef CameraFrame
             else
 %                [x1, x2] = this.CameraData.getBoxSize();
                 [x1, ~, ~] = this.CameraData.getBody();
-                if(x1 <= CameraFrame.LEFT_INSET || x1 >= (CameraFrame.WIDTH - CameraFrame.RIGHT_INSET))
+                if(x1 <= CameraFrame.LEFT_INSET ...
+                        || x1 >= (CameraFrame.WIDTH - CameraFrame.RIGHT_INSET))
                     validity = false;
                     reason='region';
                 end

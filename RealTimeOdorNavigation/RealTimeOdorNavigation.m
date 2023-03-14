@@ -120,6 +120,22 @@ classdef RealTimeOdorNavigation < handle
         end
         
         %% Get & Find Methods
+        function [arena_out] = getArenaDataForTrials(this, iTrials)
+            % GETARENADATAFORTRIALS   Returns struct of Arena coordinates for given trials
+            %
+            %   USAGE
+            %       arena_out = this.getArenaDataForTrials(iTrials)
+            %
+            %   INPUT PARAMETERS
+            %       this                    -   RealTimeOdorNavigation object
+            %       iTrials                 -   array or range of trial indices
+            
+            arena_out(5, 2, length(iTrials)) = 0;
+            for ii = 1:length(iTrials)
+                arena_out(:,:,ii) = this.TrialDataset(iTrials(ii)).getArenaCoords();
+            end
+        end
+
         function data_out = getDataForTrials(this, iTrials, options)
             % GETDATAFORTRIALS   Returns readable struct of Trial data
             %
@@ -161,7 +177,9 @@ classdef RealTimeOdorNavigation < handle
             if (~options.DAQ_Output), data_out = rmfield(data_out,'DaqData'); end
 
             for ii = 1 : nTrials
-                fprintf('[RTON] Collecting Requested Data (%i/%i)\n', ii, nTrials);
+                if(nTrials > 1)
+                    fprintf('[RTON] Collecting Requested Data (%i/%i)\n', ii, nTrials);
+                end
                 data_out(ii) = this.TrialDataset(iTrials(ii)).getDataStruct( ...
                     Valid_Type=options.Valid_Type, DAQ_Output=options.DAQ_Output, ...
                     Validity_Verbose=options.Validity_Verbose, Port=options.Port, ...

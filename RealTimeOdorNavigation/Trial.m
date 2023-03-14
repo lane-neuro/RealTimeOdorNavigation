@@ -13,7 +13,9 @@ classdef Trial < handle
         POS_FILE_EXT = '.csv'
         IMAGE_EXT = '.png'
         VIDEO_FILE_SUFFIX = ...
-            '.avi' % _reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_labeled_filtered
+            'DLC_resnet50_odor-arenaOct3shuffle1_200000_labeled.mp4'
+            % '.avi' 
+            % '_reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_labeled_filtered'
         PositionFile
         ArenaFile
         EthFile
@@ -43,7 +45,7 @@ classdef Trial < handle
                     obj.TrialNum = in1.TrialNum;
                     obj.SubjectID = in1.SubjectID;
                     obj.Name = in1.Name;
-                    obj.VideoPath = in1.VideoPath;
+                    obj.VideoPath = strcat(obj.Name, VIDEO_FILE_SUFFIX);
                     obj.BackgroundData = in1.BackgroundData;
                     obj.loadConfig();
                 end
@@ -55,7 +57,7 @@ classdef Trial < handle
                 tempName1{1} = tempName1{1}(1:end-4);
                 %tempName1 = extractBefore(tempName1, '_reencoded');
                 obj.Name = tempName1; % extractBefore(tempName1, '.avi');;;; _reencoded
-                obj.VideoPath = strcat(obj.Name, obj.VIDEO_FILE_SUFFIX);
+                obj.VideoPath = strcat(obj.Name, VIDEO_FILE_SUFFIX);
                 obj.TrialDate = datetime(char(extractBefore(tempName2, '-M')), ...
                     'InputFormat', obj.DATE_FORMAT);
                 subStr = extractBetween(tempName2, "CB", "_");
@@ -68,11 +70,20 @@ classdef Trial < handle
                 [obj.PositionFile, obj.ArenaFile] = parsePositionData(obj, ...
                     obj.Name, obj.Name, strcat(tempName2, obj.POS_FILE_EXT));
                 
-                % if strfind("eth") && file exist
-                fprintf("[RTON] Parsing Ethanol & Accelerometer Data...\n");
-                [obj.EthFile, obj.AccFile] = parseEthAccData(obj, ...
-                    obj.Name, obj.Name, strcat(tempName1, obj.BIN_FILE_EXT));
-                % else eth/acc data = null
+                temp_bin_filename = strcat(obj.Name, obj.BIN_FILE_EXT);
+                if (contains(lower(temp_bin_filename), "eths") && ...
+                        isfile(strcat("../", temp_bin_filename)))
+                    fprintf("[RTON] Parsing Ethanol & Accelerometer Data...\n");
+                    [obj.EthFile, obj.AccFile] = parseEthAccData(obj, ...
+                        obj.Name, obj.Name, temp_bin_filename);
+
+                else 
+                    fprintf("[RTON] Ethanol & Accelerometer Data Missing for Trial\n");
+                    [obj.EthFile, ~] = loadDataFile(obj, obj.Name, ...
+                        strcat(Trial.EthPrefix, tempName1));
+                    [obj.AccFile, ~] = loadDataFile(obj, obj.Name, ...
+                        strcat(Trial.AccPrefix, tempName1));
+                end
 
 %                fprintf("[RTON] Processing Field & Data Boundaries...\n");
 %                obj.BackgroundData = calcFieldBounds(obj);
@@ -426,6 +437,7 @@ classdef Trial < handle
                 frames
             end
 
+            this.IniFile = this.loadConfig();
             prevFolder = pwd;
             cd(strcat(this.Name, '\images'));
             
@@ -433,12 +445,14 @@ classdef Trial < handle
             videoLoaded = false;
             imgs = zeros(length(frames), 0);
             for ii = 1:length(frames)
-                image_name = strcat(num2str(frames(ii)), '__', this.Name, Trial.IMAGE_EXT);
+                image_name = strcat(num2str(frames(ii)), '__', this.Name, this.IMAGE_EXT);
                 if ~isfile(image_name)
                     if ~videoLoaded
                         fprintf('[RTON] getImagesForFrames(): Loading Trial Video \n');
                         cd ..
-                        video = read(VideoReader(this.VideoPath));
+                        vid_reader = VideoReader(... 
+                            strcat(this.Name, this.VIDEO_FILE_SUFFIX));
+                        video = read(vid_reader);
                         videoLoaded = true;
                         cd images
                     end
@@ -467,6 +481,19 @@ classdef Trial < handle
             cd(prevFolder);
         end
         
+        %% Arena Data Methods
+
+        function arena_out = getArenaCoords(this)
+            % GETARENACOORDS   Returns struct of Arena coordinates for trial
+            %
+            %   USAGE
+            %       arena_out = this.getArenaCoords()
+            %
+            %   INPUT PARAMETERS
+            %       this                    -   Trial object
+            
+            arena_out = this.getArenaData().getArenaCoordinates();
+        end
         %% Aggregation Methods
         function [s_out, pos_Data] = getFrameData(this, options)
             arguments (Input)
@@ -569,7 +596,7 @@ classdef Trial < handle
             fprintf('[RTON] getDataStruct(): Init \n');
             s_out.TrialDate = this.TrialDate;
             s_out.SubjectID = this.SubjectID;
-            s_out.VideoPath = this.VideoPath;
+            s_out.VideoPath = strcat(this.Name, this.VIDEO_FILE_SUFFIX);
             s_out.Name = this.Name;
 
             [s_out.PositionData, ~] = this.getFrameData(Valid_Type=options.Valid_Type, ...

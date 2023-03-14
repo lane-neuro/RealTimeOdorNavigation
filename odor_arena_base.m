@@ -8,30 +8,29 @@ dataset = RealTimeOdorNavigation();
 save('extra-trials_2.22-unfiltered.mat', 'dataset', '-v7.3');
 
 %%
-nTrials = 1:15;
+nTrials = 1:340;
 sz = [length(nTrials) 12];
 varTypes = ["uint16","datetime","uint16","double","double","double","double","double","double","double","double","double"];
 varNames = ["Index #","Date","Subject ID","Total Frames","Total Valid","% Valid","Total Invalid","% Invalid","Due to Likelihood","% Likelihood","Due to Region","% Region"];
 stat_table = table('Size',sz,'VariableTypes',varTypes,'VariableNames',varNames);
-% fig = uifigure;
-% uit = uitable(fig);
-% uit.Data = stat_table;
-% uit.ColumnSortable = true;
-% uit.ColumnEditable = [false false true];
-% uit.Position = [20 20 uit.Extent(3) uit.Extent(4)];
 
 for trialNumb = 1:length(nTrials)
 %     uit.DisplayData;
-    allFrames = dataset.getDataForTrials(trialNumb, Valid_Type="all", DAQ_Output=false);
+    allFrames = dataset.getDataForTrials(trialNumb, Valid_Type="all", ...
+        DAQ_Output=false,Likelihood=true,Validity_Verbose=true);
     t_Frames = length(allFrames.PositionData.FrameIndex);
 
-    validFrames = dataset.getDataForTrials(trialNumb, Valid_Type="valid", DAQ_Output=false);
+    validFrames = dataset.getDataForTrials(trialNumb, Valid_Type="valid", ...
+        DAQ_Output=false, Validity_Verbose=true, Likelihood=true);
     t_Valid = length(validFrames.PositionData.FrameIndex);
     p_valid = round(t_Valid/t_Frames * 100, 1);
 
-    invalidFrames = dataset.getDataForTrials(trialNumb, Valid_Type="invalid", DAQ_Output=false);
-    likelihood_frames = invalidFrames.PositionData.FrameIndex(strcmp(invalidFrames.PositionData.FrameValidityReason,'likelihood'));
-    region_frames = invalidFrames.PositionData.FrameIndex(strcmp(invalidFrames.PositionData.FrameValidityReason,'region'));
+    invalidFrames = dataset.getDataForTrials(trialNumb, Valid_Type="invalid", ...
+        DAQ_Output=false, Validity_Verbose=true, Likelihood=true);
+    likelihood_frames = invalidFrames.PositionData.FrameIndex( ...
+        strcmp(invalidFrames.PositionData.FrameValidityReason,'likelihood'));
+    region_frames = invalidFrames.PositionData.FrameIndex( ...
+        strcmp(invalidFrames.PositionData.FrameValidityReason,'region'));
     t_Invalid = length(invalidFrames.PositionData.FrameIndex);
     p_invalid = round(t_Invalid/t_Frames * 100, 1);
     n_Likelihood = length(likelihood_frames);
@@ -39,16 +38,20 @@ for trialNumb = 1:length(nTrials)
     n_Region = length(region_frames);
     p_region = round(n_Region/t_Frames * 100, 1);
     
-    stat_table(trialNumb,:) = {trialNumb, allFrames.TrialDate, allFrames.SubjectID, t_Frames, t_Valid, p_valid, t_Invalid, p_invalid, n_Likelihood, p_likelihood, n_Region, p_region};
+    stat_table(trialNumb,:) = {trialNumb, allFrames.TrialDate, allFrames.SubjectID, ...
+        t_Frames, t_Valid, p_valid, t_Invalid, p_invalid, n_Likelihood, ...
+        p_likelihood, n_Region, p_region};
 end
-save('Lane_analysis_1-10.mat', 'stat_table', '-v7.3');
+save('Lane_analysis_2-23.mat', 'stat_table', '-v7.3');
 
 %%
-trialNum = 1:15; % [13 16 18 20 28 29 41 42 56 64 69 83 88 104 105 106 118 130];
+trialNum = [163 184 197 214 242 256 276 279 304 312 315 316 317 323 332];
+
 validFrames = dataset.getDataForTrials(trialNum, Valid_Type="valid", DAQ_Output=false);
 
-for ii = 1:length(trialNum)
-    fprintf('[RTON] Processing Data for Trial %i (#%i)\n', ii, trialNum(ii));
+%%
+for ii = 6:length(trialNum)
+    fprintf('[RTON] Processing Data for Trial %i (#%i/%i)\n', trialNum(ii), ii, length(trialNum));
     frames = validFrames(ii).PositionData.FrameIndex(:);
     perc_frames = round(length(frames)*0.05);
     if(perc_frames > 50), perc_frames = 50; end
@@ -57,14 +60,31 @@ for ii = 1:length(trialNum)
     % angles = dataset.TrialDataset(trialNum).getAngleForFrames("Neck", "Nose", frames(1:end));
     coords = dataset.TrialDataset(trialNum(ii)).getCoordsForFrames(frames);
     vid_images = dataset.getImagesForFramesInTrial(trialNum(ii), frames(1:end));
-    save(strcat("Lane_trial_",num2str(trialNum(ii)),".mat"),"vid_images","coords","frames",'-v7.3');
+    save(strcat("../Lane_trial_",num2str(trialNum(ii)),".mat"),"vid_images","coords","frames",'-v7.3');
+    % DO NOT USE VID_IMAGES. USE PROC_IMAGES.
+end
+
+%% need to overwrite vid_images var
+trialNum = [163 184 197 214 242 256 276 279 304 312 315 316 317 323 332];
+
+for ii = 1:numel(trialNum)
+    load(strcat("../Lane_trial_",num2str(trialNum(ii)),".mat"));
+    clear proc_images
+    name = dataset.TrialDataset(trialNum(ii)).Name;
+    dataset.TrialDataset(trialNum(ii)).VIDEO_FILE_SUFFIX = 'DLC_resnet50_odor-arenaOct3shuffle1_200000_labeled.mp4';
+    dataset.TrialDataset(trialNum(ii)).VideoPath = strcat(name, 'DLC_resnet50_odor-arenaOct3shuffle1_200000_labeled.mp4');
+    cd(strcat(name, '\images'));
+    delete *_dlc_processed.png
+    cd ..\..\
+    proc_images = dataset.getImagesForFramesInTrial(trialNum(ii), frames(1:end));
+    save(strcat("../Lane_trial_",num2str(trialNum(ii)),".mat"),"proc_images",'-append');
 end
 
 %%
 % .mat file:
     % coords(ii) - 1:6 ; 1,2
-    % vid_images(ii).Frame
-    % vid_images(ii).Image
+    % vid_images(ii).Frame  -------> proc_images(ii).Frame
+    % vid_images(ii).Image  -------> proc_images(ii).Image
 % new vars
     % validity(ii):   0 = correct
     %                 1 = incorrect coord
@@ -72,16 +92,37 @@ end
     %                 3 = body coord out-of-region
 
 trial = 15;
-trialNum = 1:15; % [16 18 20 28 29 41 42 56 64 69 83 104 105 106 118];
-validity = zeros(length(vid_images), 0);
+trialNum = [163 184 197 214 242 256 276 279 304 312 315 316 317 323 332];
+load(strcat("Lane_trial_",num2str(trialNum(trial)),".mat"));
+arena_coords = dataset.getArenaDataForTrials(trialNum);
+x_offset = int32(round(arena_coords(1,1,trial) - mean(arena_coords(1,1,:))));
+y_offset = int32(round(arena_coords(1,2,trial) - mean(arena_coords(1,2,:))));
+
+% crop parameters
+x1 = 9; 
+x2 = 573; 
+y1 = 79; 
+y2 = 335;
+
+
+validity = zeros(length(proc_images), 0);
 figure('WindowState','maximized');
 set(gcf,'Units','pixels');
 set(groot,'defaultLineMarkerSize',20);
 
-for zz = 1:length(vid_images)
+for zz = 1:length(proc_images)
     hold off
-    imagesc(vid_images(zz).Image);
-    title(strcat(int2str(vid_images(zz).Frame), " (",int2str(zz),")"));
+
+    % X: +5 px; Y: +30 px
+%    imagesc(vid_images(zz).Image(84:340, 39:603, :));
+    % X: +5 px; Y: +4 px
+%    imagesc(vid_images(zz).Image(84:340, 13:577, :));
+    % Y: crop parameters
+%    imagesc(vid_images(zz).Image(y1:y2, x1:x2, :));
+    % raw image
+    imagesc(proc_images(zz).Image());
+
+    title(strcat(int2str(proc_images(zz).Frame), " (",int2str(zz),")"));
     axis image
     axis tight
     hold on
@@ -92,6 +133,7 @@ for zz = 1:length(vid_images)
     plot(coords(4,1,zz), coords(4,2,zz), '.');
     plot(coords(5,1,zz), coords(5,2,zz), '.');
     plot(coords(6,1,zz), coords(6,2,zz), '.');
+    plot(arena_coords(1,1,trial), arena_coords(1,2,trial), '.');
     plot([CameraFrame.LEFT_INSET, CameraFrame.LEFT_INSET],[0, 256],'-');
     plot([CameraFrame.WIDTH - CameraFrame.RIGHT_INSET, ...
         CameraFrame.WIDTH - CameraFrame.RIGHT_INSET],[0, 256],'-');
@@ -103,16 +145,16 @@ for zz = 1:length(vid_images)
         case 115, validity(zz) = 1;
         case 100, validity(zz) = 2;
         case 102, validity(zz) = 3;
-        case 122, zz = zz - 2;
+        otherwise, break;
     end
     set(gcf,'CurrentCharacter','p');
     pause(.3);
 end
 save(strcat("Lane_trial_",num2str(trialNum(trial)),".mat"),"validity",'-append');
+fprintf('[RTON] Validation %i/%i Complete: Trial %i\n', trial, length(trialNum), trialNum(trial));
 close all
 
 %%
-trialNum = 1:15;% [16 18 20 28 29 41 42 56 64 69 83 104 105 106 118];
 fileName = strcat("Lane_trial_",num2str(trialNum(:)),".mat");
 validity_mat = zeros(15,50);
 

@@ -13,14 +13,16 @@ classdef Trial < handle
         POS_FILE_EXT = '.csv'
         IMAGE_EXT = '.png'
         VIDEO_FILE_SUFFIX = ...
-            'DLC_resnet50_odor-arenaOct3shuffle1_200000_labeled.mp4'
-            % '.avi' 
+            '_reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_filtered_labeled.mp4'
+            %'.avi' 
+            % 'DLC_resnet50_odor-arenaOct3shuffle1_200000_labeled.mp4'
             % '_reencodedDLC_resnet50_odor-arenaOct3shuffle1_200000_labeled_filtered'
         PositionFile
         ArenaFile
         EthFile
         AccFile
     end
+
     properties
         TrialDate datetime
         TrialNum uint16
@@ -30,34 +32,33 @@ classdef Trial < handle
         IniFile IniConfig
         BackgroundData double
     end
+
     methods
         %% Trial Constructor
         function obj = Trial(in1, in2)
             if nargin == 1
                 if isstruct(in1)
+                    obj.Name = in1.Name;
+                    obj.IniFile = in1.IniFile;
+                    obj.IniFile = obj.loadConfig();
                     obj.PositionFile = in1.PositionFile;
                     obj.ArenaFile = in1.ArenaFile;
                     obj.EthFile = in1.EthFile;
                     obj.AccFile = in1.AccFile;
-                    obj.IniFile = in1.IniFile;
 
                     obj.TrialDate = in1.TrialDate;
                     obj.TrialNum = in1.TrialNum;
                     obj.SubjectID = in1.SubjectID;
-                    obj.Name = in1.Name;
-                    obj.VideoPath = strcat(obj.Name, VIDEO_FILE_SUFFIX);
+                    obj.VideoPath = strcat(obj.Name, obj.VIDEO_FILE_SUFFIX);
                     obj.BackgroundData = in1.BackgroundData;
-                    obj.loadConfig();
+                    fprintf("[RTON] Trial Loaded: %s\n", obj.Name);
                 end
             elseif nargin == 2
                 [~, tempName1, ~] = fileparts(in1);
                 [~, tempName2, ~] = fileparts(in2);
-                %tempName1 = lower(tempName1);
-                %tempName2 = lower(tempName2);
                 tempName1{1} = tempName1{1}(1:end-4);
-                %tempName1 = extractBefore(tempName1, '_reencoded');
-                obj.Name = tempName1; % extractBefore(tempName1, '.avi');;;; _reencoded
-                obj.VideoPath = strcat(obj.Name, VIDEO_FILE_SUFFIX);
+                obj.Name = tempName1;
+                obj.VideoPath = strcat(obj.Name, obj.VIDEO_FILE_SUFFIX);
                 obj.TrialDate = datetime(char(extractBefore(tempName2, '-M')), ...
                     'InputFormat', obj.DATE_FORMAT);
                 subStr = extractBetween(tempName2, "CB", "_");
@@ -451,7 +452,8 @@ classdef Trial < handle
                         fprintf('[RTON] getImagesForFrames(): Loading Trial Video \n');
                         cd ..
                         vid_reader = VideoReader(... 
-                            strcat(this.Name, this.VIDEO_FILE_SUFFIX));
+                            this.VideoPath);
+                            %strcat(this.Name, this.VIDEO_FILE_SUFFIX));
                         video = read(vid_reader);
                         videoLoaded = true;
                         cd images
@@ -494,6 +496,7 @@ classdef Trial < handle
             
             arena_out = this.getArenaData().getArenaCoordinates();
         end
+
         %% Aggregation Methods
         function [s_out, pos_Data] = getFrameData(this, options)
             arguments (Input)
@@ -647,17 +650,17 @@ classdef Trial < handle
             if isstruct(s)
                 fprintf('[RTON] Loading Trial: %s\n', s.Name);
                 load_trial = Trial();
+                load_trial.Name = s.Name;
+                load_trial.IniFile = load_trial.loadConfig();
                 load_trial.TrialDate = s.TrialDate;
                 load_trial.TrialNum = s.TrialNum;
                 load_trial.SubjectID = s.SubjectID;
-                load_trial.Name = s.Name;
                 load_trial.VideoPath = s.VideoPath;
                 load_trial.BackgroundData = s.BackgroundData;
                 load_trial.PositionFile = s.PositionFile;
                 load_trial.ArenaFile = s.ArenaFile;
                 load_trial.EthFile = s.EthFile;
                 load_trial.AccFile = s.AccFile;
-                load_trial.IniFile = load_trial.loadConfig();
                 obj = load_trial;
             else
                 obj = s;

@@ -9,11 +9,8 @@ classdef RealTimeOdorNavigation < handle
         HEIGHT = 256
     end % Crop Parameters
 
-    properties (Hidden = true)
-        ProjectPath char        % project folder path on hard drive
-    end
-
     properties
+        ProjectPath char        % project folder path on hard drive
         IniFile IniConfig       % config file for RTON instance/project
         TrialDataset Trial      % array of Trial objects
         BackgroundData double   % CMap of mean pixel representation of all Trial arenas
@@ -37,12 +34,14 @@ classdef RealTimeOdorNavigation < handle
             if (nargin == 2)
                 if isstruct(in1)
                     fprintf('[RTON] Loading Trials from Dataset File\n');
+                    cd(in1.ProjectPath);
                     obj.IniFile = in1.IniFile;
                     obj.IniFile = obj.loadConfig();
                     obj.ProjectPath = in1.ProjectPath;
                     obj.TrialDataset = in1.TrialDataset;
                     obj.BackgroundData = in1.BackgroundData;
                 end
+
             elseif (nargin == 1)
                 in_size = length(in1);
                 total = 1 : in_size;
@@ -52,70 +51,13 @@ classdef RealTimeOdorNavigation < handle
                 [path, ~, ~] = fileparts(in1_str{1});
                 obj.ProjectPath = strcat(path, '\MATLAB_DATA');
                 cd(obj.ProjectPath);
+
                 obj.IniFile = obj.createConfig();
-
-                fprintf('[RTON] Number of Trials Being Processed: %i\n', in_size / 2);
-                d_set(in_size / 2) = Trial();
-
-                parfor ii = 1 : (in_size / 2)
-                    d_set(ii) = Trial(in1_str(1,ii), in1_str2(1,ii));
-                    fprintf('[RTON] ----- Trial Iteration [ %i ] Processed -----\n', ii);
-                end
-                obj.TrialDataset = d_set;
-                
-%                 obj.BackgroundData = zeros(256, 564);
-%                 nTrials = numel(obj.TrialDataset);
-%                 for jj = 1 : nTrials
-%                     obj.BackgroundData = obj.BackgroundData + ...
-%                         obj.TrialDataset(jj).BackgroundData;
-%                 end
-%                 obj.BackgroundData = obj.BackgroundData / nTrials;
+                obj.TrialDataset = obj.createTrialset(in_size, in1_str, in1_str2);
 
             else
-                fprintf('[RTON] Novel Dataset Analysis..\n');
-
-                [file, path] = uigetfile('*.csv;*.mat', 'MultiSelect', 'on');
-                if iscell(file), [~, nFiles] = size(file); 
-                else, [nFiles, ~] = size(file); end
-
-                if (nFiles > 0)
-                    obj.ProjectPath = strcat(path(1:end),'\MATLAB_DATA');
-                    mkdir(obj.ProjectPath);
-                    cd(obj.ProjectPath);
-
-                    obj.IniFile = obj.createConfig();
-
-                    if (nFiles == 1)
-                        files = strings(nFiles * 2, 0);
-                        [path, name, ext] = fileparts(fullfile(path, file));
-
-                        if (isequal(ext, '.mat'))
-                            obj = load(char(fullfile(path, strcat(name, ext))));
-                            return;
-
-                        elseif (isequal(ext, '.csv'))
-                            files(1) = strcat(path, '\', ...
-                                extractBefore(name,'DLC'), '.avi.dat');
-                            files(2) = strcat(path, '\', name, ext);
-                            obj = RealTimeOdorNavigation(files);
-                        end
-
-                    else
-                        files = strings(nFiles * 2, 0);
-                        for jj = 1 : nFiles
-                            [path, name, ext] = fileparts(char(fullfile(path, ...
-                                file(1, jj))));
-                            files(jj * 2) = strcat(path, '\', name, ext);
-                            files((jj * 2) - 1) = strcat(path, '\', ...
-                                extractBefore(name,'DLC'), '.avi.dat');
-                        end
-
-                        obj = RealTimeOdorNavigation(files);
-                    end
-
-                else
-                    fprintf('[RTON] User cancelled file selection.');
-                end
+                fprintf('[RTON] Novel Dataset Analysis.\n');
+                obj = obj.createNovelProject();
             end
         end
         
@@ -289,6 +231,7 @@ classdef RealTimeOdorNavigation < handle
             sections = ini_out.GetSections();
             [this.ProjectPath, ~] = ini_out.GetValues(sections{1}, key_names{1});
             cd(this.ProjectPath);
+            fprintf("[RTON] Config Loaded: %s\n", this.ProjectPath);
         end
 
         function [ini_out] = createConfig(this)
@@ -314,6 +257,145 @@ classdef RealTimeOdorNavigation < handle
             cd(prevFolder);
         end
 
+        function [set_out] = createTrialset(~, in_size, bin_filelist, csv_filelist)
+            % CREATETRIALSET   Helper function to create a Trial array
+            %
+            %   USAGE
+            %       set_out = this.createTrialset(in_size, in_filelist1, in_filelist2)
+            %
+            %   INPUT PARAMETERS
+            %       this                -   RealTimeOdorNavigation object
+            %       in_size             -   size of supplied files
+            %       bin_filelist        -   string array of bin file names
+            %       csv_filelist        -   string array of DLC output file names
+
+            fprintf('[RTON] Number of Trials Being Processed: %i\n', in_size);
+            set_out(in_size) = Trial();
+
+            for ii = 1 : (in_size)
+                set_out(ii) = Trial(bin_filelist(1,ii), csv_filelist(1,ii));
+                fprintf('[RTON] ----- Trial Iteration [ %i ] Processed -----\n', ii);
+            end
+
+%             this.BackgroundData = zeros(256, 564);
+%             nTrials = numel(this.TrialDataset);
+%             for jj = 1 : nTrials
+%                 this.BackgroundData = this.BackgroundData + ...
+%                     this.TrialDataset(jj).BackgroundData;
+%             end
+%             this.BackgroundData = this.BackgroundData / nTrials;
+        end
+
+        function proj_out = addTrialsToDataset(this)
+            % ADDTRIALSTODATASET   Helper function to add trials to an existing project
+            %
+            %   USAGE
+            %       proj_out = this.addTrialsToDataset()
+            %
+            %   INPUT PARAMETERS
+            %       this                -   RealTimeOdorNavigation object
+            
+            [bin_files, dlc_files] = this.selectFilesPrompt();
+            temp_trialset = this.createTrialset(length(bin_files), bin_files, dlc_files);
+            this.TrialDataset = cat(2, this.TrialDataset, temp_trialset);
+            proj_out = this;
+        end
+
+        function proj_out = createNovelProject(this)
+            % CREATENOVELPROJECT   Helper function to create a new RTON project
+            %
+            %   USAGE
+            %       proj_out = this.createNovelProject()
+            %
+            %   INPUT PARAMETERS
+            %       this                -   RealTimeOdorNavigation object
+
+            [file, path] = uigetfile('*.csv;*.mat', 'MultiSelect', 'on');
+            if iscell(file), [~, nFiles] = size(file);
+            else, [nFiles, ~] = size(file); end
+
+            if (nFiles > 0)
+                this.ProjectPath = strcat(path(1:end),'\MATLAB_DATA');
+                mkdir(this.ProjectPath);
+                cd(this.ProjectPath);
+
+                this.IniFile = this.createConfig();
+
+                if (nFiles == 1)
+                    files = strings(nFiles * 2, 0);
+                    [path, name, ext] = fileparts(fullfile(path, file));
+
+                    if (isequal(ext, '.mat'))
+                        proj_out = load(char(fullfile(path, strcat(name, ext))));
+                        return;
+
+                    elseif (isequal(ext, '.csv'))
+                        files(1) = strcat(path, '\', ...         % bin file (.avi.dat)
+                            extractBefore(name,'DLC'), '.avi.dat'); 
+                        files(2) = strcat(path, '\', name, ext); % DLC output file (.csv)
+                        proj_out = RealTimeOdorNavigation(files);
+                    end
+
+                else
+                    files = strings(nFiles * 2, 0);
+                    for jj = 1 : nFiles
+                        [path, name, ext] = fileparts(char(fullfile(path, ...
+                            file(1, jj))));
+                        files(jj * 2) = strcat(path, '\', name, ext);
+                        files((jj * 2) - 1) = strcat(path, '\', ...
+                            extractBefore(name,'DLC'), '.avi.dat');
+                    end
+
+                    proj_out = RealTimeOdorNavigation(files);
+                end
+
+            else
+                fprintf('[RTON] User cancelled file selection.');
+            end
+        end
+
+        function [bin_files_out, dlc_files_out] = selectFilesPrompt(~)
+            % SELECTFILESPROMPT   Helper function to select data files for processing
+            %
+            %   USAGE
+            %       [bin_files_out dlc_files_out] = this.selectFilesPrompt()
+            %
+            %   INPUT PARAMETERS
+            %       this                -   RealTimeOdorNavigation object
+
+            [file, path] = uigetfile('*.csv;*.mat', 'MultiSelect', 'on');
+            if iscell(file), [~, nFiles] = size(file);
+            else, [nFiles, ~] = size(file); end
+
+            if (nFiles > 0)
+                bin_files_out = strings(nFiles, 0);
+                dlc_files_out = strings(nFiles, 0);
+                
+                if (nFiles == 1)
+                    [path, name, ext] = fileparts(fullfile(path, file));
+
+                    if (isequal(ext, '.csv'))
+                        % bin file (.avi.dat)
+                        bin_files_out(1) = strcat(path, '\', ...
+                            extractBefore(name,'DLC'), '.avi.dat'); 
+                        % DLC output file (.csv)
+                        dlc_files_out(2) = strcat(path, '\', name, ext);
+                    end
+
+                else
+                    for jj = 1 : nFiles
+                        [path, name, ext] = fileparts(char(fullfile(path, file(1, jj))));
+                        dlc_files_out(jj) = strcat(path, '\', name, ext);
+                        bin_files_out(jj) = strcat(path, '\', ...
+                            extractBefore(name,'DLC'), '.avi.dat');
+                    end
+                end
+
+            else
+                fprintf('[RTON] User cancelled file selection.');
+            end
+        end
+
     end
     
     %% Save, Load
@@ -329,10 +411,10 @@ classdef RealTimeOdorNavigation < handle
 
         function obj = loadobj(s)
             if isstruct(s)
+                cd(s.ProjectPath);
                 struct_out = struct;
                 struct_out.IniFile = s.IniFile;
                 struct_out.ProjectPath = s.ProjectPath;
-                cd(struct_out.ProjectPath);
                 struct_out.TrialDataset = s.TrialDataset;
                 struct_out.BackgroundData = s.BackgroundData;
                 obj = RealTimeOdorNavigation(struct_out, 0);

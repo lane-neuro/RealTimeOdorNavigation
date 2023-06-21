@@ -14,13 +14,14 @@ classdef ETH_Sensor < handle
             end
         end
         
-        function [time, voltage] = getEthReading(this)
+        function [time, voltage, cam_time] = getEthReading(this)
             arguments (Input)
                 this ETH_Sensor
             end
 
             time = this.getEthTime();
-            voltage = this.Voltage; 
+            voltage = this.Voltage;
+            cam_time = this.Camera_Time;
         end
 
         function time = getEthTime(this), time = this.DAQ_Time; end

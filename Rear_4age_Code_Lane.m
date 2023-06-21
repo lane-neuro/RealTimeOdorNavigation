@@ -17,7 +17,7 @@ n_ten = n_ten(14:end); %Disregarding the first 19 samples
 t_s = data(n_ten+1); % Time in milliseconds
 % TS = data(n_ten+2); %SAMPLE TIME per TRIAL
 frame_stamp = data(n_ten+2); % Time stamp for each camera frame
-%t_camera = unique(frame_stamp./1000); % Camera Frame time (in s)
+t_camera = unique(frame_stamp./1000); % Camera Frame time (in s)
 ETH = data(n_ten+4);
 x = data(n_ten+9);
 y = data(n_ten+10);
@@ -41,8 +41,6 @@ tau_decay = 10.;
 
 kernel = a*(exp(-t/tau_decay)-exp(-t/tau_rise)); %kernel
 kernel = (kernel-min(kernel))./(max(kernel)-min(kernel));%scaling the kernel (from 0 to 1)
-
-% paused here %
 
 %%% Deconvolving ETH sensor
 lpFilt = designfilt('lowpassfir','PassbandFrequency',0.001, ...
@@ -86,5 +84,5 @@ xz_diff2 = interp1(ts, xz_diff, t_camera);
 
 thr = 0.3379; %% threshold from Figure 3A
 
-rear_inds = (xz_diff2>thr); %rearing indices > thresshold
+rear_inds = (xz_diff2>thr); %rearing indices > threshold
 for_inds = (xz_diff2<thr); %foraging indices < threshold

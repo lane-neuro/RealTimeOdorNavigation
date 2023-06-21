@@ -17,7 +17,7 @@ classdef Accelerometer < handle
             end
         end
         
-        function [time, x, y, z] = getAccReading(this)
+        function [time, x, y, z, cam_time] = getAccReading(this)
             arguments (Input)
                 this Accelerometer
             end
@@ -26,6 +26,7 @@ classdef Accelerometer < handle
             x = this.X;
             y = this.Y;
             z = this.Z;
+            cam_time = this.Camera_Time;
         end
         
         function time = getAccTime(this), time = this.DAQ_Time; end

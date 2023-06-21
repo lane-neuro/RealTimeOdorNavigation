@@ -59,8 +59,8 @@ for ii = 6:length(trialNum)
 
     % angles = dataset.TrialDataset(trialNum).getAngleForFrames("Neck", "Nose", frames(1:end));
     coords = dataset.TrialDataset(trialNum(ii)).getCoordsForFrames(frames);
-    vid_images = dataset.getImagesForFramesInTrial(trialNum(ii), frames(1:end));
-    save(strcat("../Lane_trial_",num2str(trialNum(ii)),".mat"),"vid_images","coords","frames",'-v7.3');
+    imgs_rear = dataset.getImagesForFramesInTrial(trialNum(ii), frames(1:end));
+    save(strcat("../Lane_trial_",num2str(trialNum(ii)),".mat"),"imgs_rear","coords","frames",'-v7.3');
     % DO NOT USE VID_IMAGES. USE PROC_IMAGES.
 end
 
@@ -167,24 +167,24 @@ end
 
 %%
 Trial.saveData(dataset.TrialDataset(trialNum), 'frames', frames);
-
-for ii = 1:numel(vid_images)
-    [nRows, ~, ~] = size(vid_images(ii).Image);
+%%
+for ii = 1:numel(slim_frames)
+    [nRows, ~, ~] = size(slim_frames(ii).Image);
     if nRows > 300
-        vid_images(ii).Image = imcrop(vid_images(ii).Image, [10 80 563 255]); % vid_images(ii).Image(80:335, 10:573, :)
+        slim_frames(ii).Image = imcrop(slim_frames(ii).Image, [10 80 563 255]); % vid_images(ii).Image(80:335, 10:573, :)
     end
 
-    figure, set(gcf,'Units','pixels');
-    image(vid_images(ii).Image);
+    figure, set(gcf,'Units','pixels','WindowState','maximized');
+    image(slim_frames(ii).Image);
     axis image
     hold on
-    title(vid_images(ii).Frame);
-    text(20,285, sprintf('Neck->Nose   %0.5f', angles(ii,2)), 'FontSize',12);
+    title(slim_frames(ii).Frame);
+    %text(20,285, sprintf('Neck->Nose   %0.5f', angles(ii,2)), 'FontSize',12);
     
-    plot([coords(1,1,ii), coords(4,1,ii)], [coords(1,2,ii), coords(4,2,ii)], '.');
-    plot([coords(4,1,ii), coords(5,1,ii)], [coords(4,2,ii), coords(5,2,ii)], '.');
-    plot([coords(5,1,ii), coords(6,1,ii)], [coords(5,2,ii), coords(6,2,ii)], '.');
-    plot(coords(7,1,ii), coords(7,2,ii), '.');    
+%     plot([rear_coords(1,1,ii), rear_coords(4,1,ii)], [rear_coords(1,2,ii), rear_coords(4,2,ii)], '.');
+%     plot([rear_coords(4,1,ii), rear_coords(5,1,ii)], [rear_coords(4,2,ii), rear_coords(5,2,ii)], '.');
+%     plot([rear_coords(5,1,ii), rear_coords(6,1,ii)], [rear_coords(5,2,ii), rear_coords(6,2,ii)], '.');
+    %plot(rear_coords(7,1,ii), rear_coords(7,2,ii), '.');    
 end
 
 

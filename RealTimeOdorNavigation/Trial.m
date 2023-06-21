@@ -295,10 +295,11 @@ classdef Trial < handle
             fprintf('[RTON] getAllEthData(): Collecting Ethanol Data \n');
 
             time = zeros(eth_size, 0);
+            cam_time = zeros(eth_size, 0);
             parfor ii = 1:eth_size
-                [time(ii), voltage(ii)] = ethData(ii).getEthReading();
+                [time(ii), voltage(ii), cam_time(ii)] = ethData(ii).getEthReading();
             end
-            out1 = [time' voltage'];
+            out1 = [time' voltage' cam_time'];
         end
         
         %% Accelerometer Methods
@@ -326,10 +327,11 @@ classdef Trial < handle
 
             fprintf('[RTON] getAllAccelerometerData(): Collecting Accelerometer Data \n');
             time = zeros(acc_size, 0);
+            cam = zeros(acc_size, 0);
             parfor ii = 1:acc_size
-                [time(ii), x(ii), y(ii), z(ii)] = accData(ii).getAccReading();
+                [time(ii), x(ii), y(ii), z(ii), cam(ii)] = accData(ii).getAccReading();
             end
-            s_out = [time' x' y' z'];
+            s_out = [time' x' y' z' cam'];
         end
         
         %% Position Data Methods
@@ -498,6 +500,96 @@ classdef Trial < handle
         end
 
         %% Aggregation Methods
+        function [rearing_out, foraging_out, dlc_out] = getBehavioralData(this, options)
+            arguments (Input)
+                this Trial
+                options.PositionData = this.PositionFile.positionData
+            end
+            arguments (Output)
+                rearing_out struct
+                foraging_out struct
+                dlc_out struct
+            end
+
+            fprintf('[RTON] getBehavioralData(): Init\n');
+
+            ETH = this.getAllEthData();
+            ETH = ETH(:, 2);
+            acc_out = this.getAllAccelerometerData();
+            t_s = acc_out(:,1);
+            x = acc_out(:,2);
+            y = acc_out(:,3);
+            z = acc_out(:,4);
+            frame_stamp = acc_out(:,5);
+
+            DLCOutput = this.getFrameData(PositionData=options.PositionData, ...
+                Valid_Type='all', Validity_Verbose=true, Likelihood=true);
+            nFrames = size(DLCOutput.FrameIndex,2);
+            f_c = (max(t_s)./1000)./nFrames;
+            t_camera = DLCOutput.FrameIndex(:).*f_c;
+
+            dt = median(diff(t_s));
+            Fs = 1/(dt/1000);
+            t=0:1/Fs:(150.-1/Fs);
+            t = t';
+            a= 1.;
+            tau_rise = 0.02;
+            tau_decay = 10.;
+            thr = 0.3379;       % threshold from Figure 3A
+
+            kernel = a*(exp(-t/tau_decay)-exp(-t/tau_rise));
+            kernel = (kernel-min(kernel))./(max(kernel)-min(kernel));
+
+            % Deconvolution Filters
+            lpFilt = designfilt('lowpassfir','PassbandFrequency',0.001, ...
+                'StopbandFrequency',5,'PassbandRipple',0.5, ...
+                'StopbandAttenuation',100,'DesignMethod','kaiserwin',...
+                'SampleRate', Fs);
+            lpFilt2 = designfilt('lowpassfir','PassbandFrequency',0.001, ...
+                'StopbandFrequency',40,'PassbandRipple',0.5, ...
+                'StopbandAttenuation',100,'DesignMethod','kaiserwin',...
+                'SampleRate', Fs);
+            
+            %Accelerometer Signals
+            x = resample(x,t_s/1000,Fs,'linear');
+            acc_x = (x-1.6325)./0.3;
+            filt_x = filtfilt(lpFilt2, acc_x);
+            med_x = movmedian(filt_x, [100 0]);
+
+            y = resample(y,t_s/1000,Fs,'linear');
+            acc_y = (y-1.665)./0.3;
+            filt_y = filtfilt(lpFilt2, acc_y);
+            med_y = movmedian(filt_y, [100 0]);
+
+            z = resample(z,t_s/1000,Fs,'linear');
+            acc_z = (z-1.65)./0.3;
+            filt_z = filtfilt(lpFilt2, acc_z);
+            med_z = movmedian(filt_z, [100 0]);
+
+            xz_diff = med_z-med_x;
+
+            [ETH, ts] = resample(ETH,t_s/1000,Fs,'linear');
+            ETH_filt = filtfilt(lpFilt, ETH);
+            ETHfilt_fft = fft(ETH_filt);
+            kernel_fft = fft(kernel, numel(ETH));
+            ETHdeconv_fft = ETHfilt_fft./kernel_fft;
+            ETHdeconv = ifft(ETHdeconv_fft);
+
+            xz_diff2 = interp1(ts, xz_diff, t_camera);
+
+            rearing_out.Frames = find(xz_diff2 >= thr);
+            rearing_out.ImageData = this.getImagesForFrames(rearing_out.Frames);
+            rearing_out.RearingCount = numel(rearing_out.Frames);
+
+            foraging_out.Frames = find(xz_diff2 < thr);
+            % foraging_out.ImageData = this.getImagesForFrames(foraging_out.Frames);
+            foraging_out.ForagingCount = numel(foraging_out.Frames);
+
+            dlc_out = DLCOutput;
+
+            fprintf('[RTON] getBehavioralData(): Returning Data\n');
+        end
+
         function [s_out, pos_Data] = getFrameData(this, options)
             arguments (Input)
                 this Trial

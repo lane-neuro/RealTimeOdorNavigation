@@ -486,7 +486,6 @@ classdef Trial < handle
         end
         
         %% Arena Data Methods
-
         function arena_out = getArenaCoords(this)
             % GETARENACOORDS   Returns struct of Arena coordinates for trial
             %
@@ -577,14 +576,25 @@ classdef Trial < handle
 
             xz_diff2 = interp1(ts, xz_diff, t_camera);
 
-            rearing_out.Frames = find(xz_diff2 >= thr);
-            rearing_out.ImageData = this.getImagesForFrames(rearing_out.Frames);
-            rearing_out.RearingCount = numel(rearing_out.Frames);
+            raw_Frames = find(xz_diff2 >= thr);
+            if size(raw_Frames,1) > 0
+                for ii = 1:numel(raw_Frames)
+                    raw_Frames(ii,2) = xz_diff2(raw_Frames(ii,1));
+                    raw_Frames(ii,3) = DLCOutput.FrameValidity(raw_Frames(ii,1));
+                end
+
+                valid = raw_Frames(find(raw_Frames(:,3)==1),:);
+                imgs = this.getImagesForFrames(valid(:,1));
+                for zz = 1:numel(valid(:,1))
+                    imgs(zz).xz_diff = valid(zz,2);
+                    imgs(zz).Validity = valid(zz,3);
+                end
+                rearing_out = imgs;
+            else
+                rearing_out = struct;
+            end
 
             foraging_out.Frames = find(xz_diff2 < thr);
-            % foraging_out.ImageData = this.getImagesForFrames(foraging_out.Frames);
-            foraging_out.ForagingCount = numel(foraging_out.Frames);
-
             dlc_out = DLCOutput;
 
             fprintf('[RTON] getBehavioralData(): Returning Data\n');

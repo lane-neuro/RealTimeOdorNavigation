@@ -84,5 +84,5 @@ xz_diff2 = interp1(ts, xz_diff, t_camera);
 
 thr = 0.3379; %% threshold from Figure 3A
 
-rear_inds = (xz_diff2>thr); %rearing indices > threshold
+rear_inds = (xz_diff2>=thr); %rearing indices > threshold
 for_inds = (xz_diff2<thr); %foraging indices < threshold

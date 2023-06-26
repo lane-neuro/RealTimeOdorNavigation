@@ -127,6 +127,7 @@ for zz = 1:length(proc_images)
     axis tight
     hold on
 
+    % coordinate plotting for DLC validation measures
     plot(coords(1,1,zz), coords(1,2,zz), '.');
     plot(coords(2,1,zz), coords(2,2,zz), '.');
     plot(coords(3,1,zz), coords(3,2,zz), '.');
@@ -150,7 +151,7 @@ for zz = 1:length(proc_images)
     set(gcf,'CurrentCharacter','p');
     pause(.3);
 end
-save(strcat("Lane_trial_",num2str(trialNum(trial)),".mat"),"validity",'-append');
+%save(strcat("Lane_trial_",num2str(trialNum(trial)),".mat"),"validity",'-append');
 fprintf('[RTON] Validation %i/%i Complete: Trial %i\n', trial, length(trialNum), trialNum(trial));
 close all
 
@@ -186,6 +187,54 @@ for ii = 1:numel(slim_frames)
 %     plot([rear_coords(5,1,ii), rear_coords(6,1,ii)], [rear_coords(5,2,ii), rear_coords(6,2,ii)], '.');
     %plot(rear_coords(7,1,ii), rear_coords(7,2,ii), '.');    
 end
+
+%% Trim Rearing Frames to 50 per trial
+for ii = 1:15
+    rear_trim(ii).Rearing_Frames = randsample(rear_trim(ii).Rearing_Frames(1:end),50);
+end
+
+%% Rearing Validation
+
+% .mat file:
+    % rear_trim(iTrial).Rearing_Frames(ii).Frame
+    % rear_trim(iTrial).Rearing_Frames(ii).Image
+    % rear_trim(iTrial).Rearing_Frames(ii).xz_diff
+    % rear_trim(iTrial).Rearing_Frames(ii).Validity (likelihood validity)
+% new vars
+    % rear_trim(iTrial).Rearing_Frames(ii).rear_value:  0 = correct (rearing)
+    %                                                   1 = incorrect (not rearing)
+
+clear rear_value
+figure('WindowState','maximized');
+set(gcf,'Units','pixels');
+set(groot,'defaultLineMarkerSize',20);
+
+for ii = 1:50
+    hold off
+
+    imagesc(rear_trim(iTrial).Rearing_Frames(ii).Image());
+
+    title(strcat(int2str(rear_trim(iTrial).Rearing_Frames(ii).Frame), ...
+        " (",int2str(ii),")"));
+    axis image
+    axis tight
+    hold on
+
+    figure(gcf);
+
+    waitfor(gcf,'CurrentCharacter');
+    switch uint8(get(gcf,'CurrentCharacter'))
+        case 97, rear_trim(iTrial).Rearing_Frames(ii).rear_value = 0;
+        case 115, rear_trim(iTrial).Rearing_Frames(ii).rear_value = 1;
+        otherwise, break;
+    end
+    set(gcf,'CurrentCharacter','p');
+    pause(.3);
+end
+
+rear_value = [rear_trim(iTrial).Rearing_Frames.rear_value];
+iTrial = iTrial + 1;
+close all
 
 
 %%

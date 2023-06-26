@@ -129,6 +129,26 @@ classdef RealTimeOdorNavigation < handle
             end
         end
 
+        function rear_out = getRearingDataForTrials(this, iTrials)
+            arguments (Input)
+                this RealTimeOdorNavigation    
+                iTrials
+            end
+            
+            nTrials = length(iTrials);
+            for ii = 1 : nTrials
+                if(nTrials > 1)
+                    fprintf('[RTON] Collecting Requested Data (%i/%i)\n', ii, nTrials);
+                end
+                [tempFrames, ~, ~] = this.TrialDataset(iTrials(ii)).getBehavioralData();
+
+                if ~isempty(fieldnames(tempFrames))
+                    rear_out(ii).Name = this.TrialDataset(iTrials(ii)).Name;
+                    rear_out(ii).Rearing_Frames = tempFrames;
+                end
+            end
+        end
+
         function vel_out = getSpeedForFramesInTrials(this, iTrials, iFrames)
             % GETSPEEDFORFRAMESINTRIALS   Returns velocity array for frame(s) in Trial(s)
             %

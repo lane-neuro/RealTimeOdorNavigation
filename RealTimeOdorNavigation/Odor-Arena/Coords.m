@@ -46,7 +46,7 @@ classdef Coords
         end
         
         function [x, y, likelihood] = getCoord(this)
-            % Creates and returns a RealTimeOdorNavigation object
+            % Returns [x, y, likelihood] for Coord obj
             %
             %   USAGE
             %       [x, y, likelihood] = this.getCoord()

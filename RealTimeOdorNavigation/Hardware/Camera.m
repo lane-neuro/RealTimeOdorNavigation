@@ -46,7 +46,8 @@ classdef Camera < handle
             [x(6), y(6)] = this.getTailbase();
             out1 = [x' y'];
 
-            if options.Likelihood, out1 = [x' y' this.getAllLikelihoods(Port=options.Port)']; end
+            if options.Likelihood, out1 = [x' y' ...
+                    this.getAllLikelihoods(Port=options.Port)']; end
         end
         
         function likelihoods = getAllLikelihoods(this, options)
@@ -80,6 +81,16 @@ classdef Camera < handle
             y_max = max(y);
         end
         
+        function out = getHeadCenter(this)
+            arguments (Input)
+                this Camera
+            end
+
+            earMidpoint = this.calcMidpoint("LeftEar","RightEar");
+            noseMidpoint = this.calcMidpoint("Nose","Neck");
+            out = (earMidpoint(:) + noseMidpoint(:)).'/2;
+        end
+
         %% Part Get Methods
         function [x, y, lh] = getNose(this), [x, y, lh] = this.Nose.getCoord(); end
         function [x, y, lh] = getLeftEar(this), [x, y, lh] = this.LeftEar.getCoord(); end        
@@ -93,14 +104,63 @@ classdef Camera < handle
         function ang = calcAngleBetweenCoords(this, p1_name, p2_name)
             arguments (Input)
                 this Camera
-                p1_name string {mustBeMember(p1_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
-                p2_name string {mustBeMember(p2_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                p1_name string {mustBeMember(p1_name, ...
+                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                p2_name string {mustBeMember(p2_name, ...
+                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
             end
 
             p1 = this.(p1_name);
             p2 = this.(p2_name);
             ang = atan2d(p2.getY() - p1.getY(), p2.getX() - p1.getX());
             if ang < 0, ang = ang + 360; end % add 360 deg if calculated ang < 0
+        end
+
+        %% Distance Calculation
+        function dist_out = calcDistance(this, p1_name, p2_name)
+            arguments (Input)
+                this Camera
+                p1_name string {mustBeMember(p1_name, ...
+                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                p2_name string {mustBeMember(p2_name, ...
+                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+            end
+
+            p1 = this.(p1_name);
+            p2 = this.(p2_name);
+
+            dist_out = pdist2([p1.getX(), p2.getX()],[p1.getY(), p2.getY()]);
+        end
+
+        function dist_out = calcBehaviorDistance(this, p1, p2)
+            arguments (Input)
+                this Camera
+                p1 double
+                p2 double
+            end
+
+            dist_out = pdist2([p1(1), p2(1)],[p1(2), p2(2)]);
+        end
+
+        %% Midpoint Calculation
+        function mid_out = calcMidpoint(this, p1_name, p2_name)
+            arguments (Input)
+                this Camera
+                p1_name string {mustBeMember(p1_name, ...
+                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                p2_name string {mustBeMember(p2_name, ...
+                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+            end
+
+            p1 = this.(p1_name);
+            [p1_x, p1_y, ~] = p1.getCoord();
+            P1 = [p1_x, p1_y];
+
+            p2 = this.(p2_name);
+            [p2_x, p2_y, ~] = p2.getCoord();
+            P2 = [p2_x, p2_y];
+
+            mid_out = (P1(:) + P2(:)).'/2;
         end
     end
     

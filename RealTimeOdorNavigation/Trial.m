@@ -433,6 +433,26 @@ classdef Trial < handle
             fprintf('[RTON] getAngleForFrames(): Returning Data Struct \n');
             out1 = [frames a'];
         end
+
+        function out1 = getBodyDistanceForFrames(this, frames, options)
+            arguments (Input)
+                this Trial
+                frames
+                options.PositionData = this.getPositionData(frames)
+            end
+
+            fprintf('[RTON] getBodyDistanceForFrames(): Init \n');
+            a = zeros(length(frames), 0);
+            pos_data = options.PositionData;
+
+            fprintf('[RTON] getBodyDistanceForFrames(): Collecting Distances\n');
+            parfor ii = 1:length(pos_data)
+                [a(ii)] = pos_data(ii).getBodyDistance();
+            end
+
+            fprintf('[RTON] getBodyDistanceForFrames(): Returning Data Struct \n');
+            out1 = [frames a'];
+        end
         
         function imgs = getImagesForFrames(this, frames)
             arguments (Input)
@@ -585,9 +605,11 @@ classdef Trial < handle
 
                 valid = raw_Frames(find(raw_Frames(:,3)==1),:);
                 imgs = this.getImagesForFrames(valid(:,1));
+                body_dist = this.getBodyDistanceForFrames(valid(:,1));
                 for zz = 1:numel(valid(:,1))
                     imgs(zz).xz_diff = valid(zz,2);
-                    imgs(zz).Validity = valid(zz,3);
+                    imgs(zz).HeadBody = body_dist(zz);
+                    %imgs(zz).Validity = valid(zz,3);
                 end
                 rearing_out = imgs;
             else

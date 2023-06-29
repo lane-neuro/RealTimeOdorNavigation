@@ -65,6 +65,16 @@ classdef CameraFrame
 
             out1 = this.CameraData.calcAngleBetweenCoords(p1_name, p2_name);
         end
+
+        function dist_out = getBodyDistance(this)
+            arguments (Input)
+                this CameraFrame
+            end
+            
+            [p1(1), p1(2)] = this.CameraData.getHeadCenter();
+            [p2(1), p2(2), ~] = this.CameraData.getBody();
+            dist_out = this.CameraData.calcBehaviorDistance(p1,p2);
+        end
         
         function out1 = getFrameIndex(this), out1 = this.Cam_Index; end
 

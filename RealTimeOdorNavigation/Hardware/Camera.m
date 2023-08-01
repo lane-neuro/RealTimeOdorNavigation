@@ -88,7 +88,8 @@ classdef Camera < handle
 
             earMidpoint = this.calcMidpoint("LeftEar","RightEar");
             noseMidpoint = this.calcMidpoint("Nose","Neck");
-            out = (earMidpoint(:) + noseMidpoint(:)).'/2;
+            dist_out = (earMidpoint(:) + noseMidpoint(:)).'/2;
+            out = dist_out;
         end
 
         %% Part Get Methods
@@ -137,6 +138,9 @@ classdef Camera < handle
                 this Camera
                 p1 double
                 p2 double
+            end
+            arguments (Output)
+                dist_out double
             end
 
             dist_out = pdist2([p1(1), p2(1)],[p1(2), p2(2)]);

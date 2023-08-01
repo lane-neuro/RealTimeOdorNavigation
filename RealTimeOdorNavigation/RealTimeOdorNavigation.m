@@ -199,10 +199,13 @@ classdef RealTimeOdorNavigation < handle
             %
             %   INPUT PARAMETERS
             %       this                -   RealTimeOdorNavigation object
-            %       filter_type         -   filter types:   "byDate", "bySubjectNo"
+            %       filter_type         -   filter types:   "byDate",
+            %                                               "bySubjectNo",
+            %                                               "byName"
             %       data_in             -   must be of type:
             %                                   uint16: subject id number
             %                                   datetime: datetime matrix [earliest last]
+            %                                   char: trial name (string)
             %
             %       optional arguments:
             %           trials_in       -   pass existing matrix of trials as seed
@@ -213,13 +216,15 @@ classdef RealTimeOdorNavigation < handle
                 filter_type string ...
                     {mustBeMember(filter_type, ...
                     ["byDate", ...
-                    "bySubjectNo" ...
+                    "bySubjectNo", ...
+                    "byName" ...
                     ])}
                 data_in {mustBeA(data_in, ...           
                     ["double", ...
                     "datetime", ...
+                    "char" ...
                     ])}
-                options.trials_in(:,1) {mustBeA(options.trials_in, ["Trial"])} ...
+                options.trials_in(1,:) {mustBeA(options.trials_in, ["Trial"])} ...
                     = this.TrialDataset
             end
 
@@ -229,8 +234,11 @@ classdef RealTimeOdorNavigation < handle
                     tf = isbetween([t_set.TrialDate], data_in(1), data_in(2));
                 case "bySubjectNo"
                     tf = [t_set.SubjectID] == data_in;
+                case "byName"
+                    %%tf = strcmp([t_set.Name], data_in);
+                    tf = find(strcmp({t_set.Name}, data_in)==1);
             end
-            t_Out = t_set(tf);
+            t_Out = tf;
         end
 
         function [ini_out] = loadConfig(this)

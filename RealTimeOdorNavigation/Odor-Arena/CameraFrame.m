@@ -70,8 +70,11 @@ classdef CameraFrame
             arguments (Input)
                 this CameraFrame
             end
+            arguments (Output)
+                dist_out double
+            end
             
-            [p1(1), p1(2)] = this.CameraData.getHeadCenter();
+            p1 = this.CameraData.getHeadCenter();
             [p2(1), p2(2), ~] = this.CameraData.getBody();
             dist_out = this.CameraData.calcBehaviorDistance(p1,p2);
         end

@@ -236,6 +236,19 @@ rear_value = [rear_trim(iTrial).Rearing_Frames.rear_value];
 iTrial = iTrial + 1;
 close all
 
+%% body euc distance transformations
+
+for ii = 1 : length(trial_list)
+    t_trial = dataset.TrialDataset(trial_list(ii));
+    t_frames = [rear_trim(ii).Rearing_Frames.Frame].';
+    t_dist = t_trial.getBodyDistanceForFrames(t_frames);
+
+    for jj = 1 : length(t_frames)
+        rear_trim(ii).Rearing_Frames(jj).Difference = t_dist(jj,2);
+    end
+end
+
+
 
 %%
 %{   

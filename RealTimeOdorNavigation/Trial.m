@@ -523,6 +523,8 @@ classdef Trial < handle
             arguments (Input)
                 this Trial
                 options.PositionData = this.PositionFile.positionData
+                options.EthData = this.EthFile.ethData
+                options.AccData = this.AccFile.accData
             end
             arguments (Output)
                 rearing_out struct
@@ -532,9 +534,9 @@ classdef Trial < handle
 
             fprintf('[RTON] getBehavioralData(): Init\n');
 
-            ETH = this.getAllEthData();
+            ETH = this.getAllEthData(EthData=options.EthData);
             ETH = ETH(:, 2);
-            acc_out = this.getAllAccelerometerData();
+            acc_out = this.getAllAccelerometerData(AccData=options.AccData);
             t_s = acc_out(:,1);
             x = acc_out(:,2);
             y = acc_out(:,3);

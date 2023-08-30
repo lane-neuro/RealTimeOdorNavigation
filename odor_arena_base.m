@@ -188,10 +188,65 @@ for ii = 1:numel(slim_frames)
     %plot(rear_coords(7,1,ii), rear_coords(7,2,ii), '.');    
 end
 
-%% Trim Rearing Frames to 50 per trial
-for ii = 1:15
-    rear_trim(ii).Rearing_Frames = randsample(rear_trim(ii).Rearing_Frames(1:end),50);
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%
+% REARING DATA GROUND TRUTH %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+rand_sample = randsample(dataset.TrialDataset(1:end), 25);  % random sample of 25 trials
+trial_info = struct;    % create struct to hold data
+
+% loop through selected trials, populate struct
+for zz = 10:numel(rand_sample)
+    fprintf('[RTON] === Iterating trial %i ===', zz)    
+    % Index w/in Dataset
+    trial_info(zz).Dataset_Index = dataset.filterTrialset("byName",trial_info(zz).Name);
+    trial_info(zz).Subject = rand_sample(zz).SubjectID;         % SubjectID
+    trial_info(zz).Name = rand_sample(zz).Name;                 % Name
+    [t_behav, ~, ~] = rand_sample(zz).getBehavioralData();
+    trial_info(zz).Potential_Rearing = t_behav;                 % Behavioral Data (Frames)
 end
+
+%% frame selection/specification loop
+for ii = 2:numel(trial_info_trimmed)
+    f_index = 2;
+    min_frames = 30; % minimum frames between each index (30 = .5 sec)
+    min_xz = 0.100; % minimum xz_diff between each index
+
+
+    while ~isempty(trial_info_trimmed(ii).Potential_Rearing(f_index))
+        curr_frame = trial_info_trimmed(ii).Potential_Rearing(f_index).Frame;
+        prev_frame = trial_info_trimmed(ii).Potential_Rearing(f_index - 1).Frame;
+        f_diff = curr_frame - prev_frame;
+
+        curr_xz = trial_info_trimmed(ii).Potential_Rearing(f_index).xz_diff;
+        prev_xz = trial_info_trimmed(ii).Potential_Rearing(f_index - 1).xz_diff;
+        xz_diff = abs(curr_xz - prev_xz);
+
+        if f_diff < min_frames            % Frame numbers must be > min_frames
+            if xz_diff < min_xz           % xz_diff must be > min_xz
+                fprintf('[RTON] Removed Frame [%i]:\tf_diff: %i\txz_diff: %d\n', ...
+                    curr_frame, f_diff, xz_diff);
+                trial_info_trimmed(ii).Potential_Rearing(f_index) = [];    % delete entry
+            else
+                fprintf('[RTON] Valid Frame [%i]:\tf_diff: %i\txz_diff: %d\n', ...
+                    curr_frame, f_diff, xz_diff);
+                f_index = f_index + 1;
+            end
+        else
+            fprintf('[RTON] Valid Frame [%i]:\tf_diff: %i\txz_diff: %d\n', ...
+                curr_frame, f_diff, xz_diff);
+            f_index = f_index + 1;
+        end
+
+        if f_index > numel(trial_info_trimmed(ii).Potential_Rearing)
+            break
+        end
+    end
+end
+
+[~,index] = sortrows([trial_info_trimmed.Subject].'); 
+trial_info_trimmed = trial_info_trimmed(index);
 
 %% Rearing Validation
 
@@ -201,42 +256,90 @@ end
     % rear_trim(iTrial).Rearing_Frames(ii).xz_diff
     % rear_trim(iTrial).Rearing_Frames(ii).Validity (likelihood validity)
 % new vars
-    % rear_trim(iTrial).Rearing_Frames(ii).rear_value:  0 = correct (rearing)
-    %                                                   1 = incorrect (not rearing)
+    % rear_trim(iTrial).Rearing_Frames(ii).rear_value:  0 = rearing
+    %                                                   1 = not rearing
+    %                                                   2 = head raise
+    %                                                   3 = at port
+    %                                                   4 = unsure
 
 clear rear_value
 figure('WindowState','maximized');
 set(gcf,'Units','pixels');
 set(groot,'defaultLineMarkerSize',20);
 
-for ii = 1:50
-    hold off
+% loops through every trial in trial_info_trimmed
+for iTrial = 4 : numel(trial_info_trimmed)
+    fprintf('[RTON] trial_info_trimmed: trial %i of %i\n', iTrial, ...
+        numel(trial_info_trimmed));
 
-    imagesc(rear_trim(iTrial).Rearing_Frames(ii).Image());
+    for ii = 1 : numel(trial_info_trimmed(iTrial).Potential_Rearing)
+        if isfield(trial_info_trimmed(iTrial).Potential_Rearing, 'rear_value')
+            if ~isempty(trial_info_trimmed(iTrial).Potential_Rearing(ii).rear_value)
+                continue;
+            end
+        end
 
-    title(strcat(int2str(rear_trim(iTrial).Rearing_Frames(ii).Frame), ...
-        " (",int2str(ii),")"));
-    axis image
-    axis tight
-    hold on
+        hold off
 
-    figure(gcf);
+        imagesc(trial_info_trimmed(iTrial).Potential_Rearing(ii).Image());
 
-    waitfor(gcf,'CurrentCharacter');
-    switch uint8(get(gcf,'CurrentCharacter'))
-        case 97, rear_trim(iTrial).Rearing_Frames(ii).rear_value = 0;
-        case 115, rear_trim(iTrial).Rearing_Frames(ii).rear_value = 1;
-        otherwise, break;
+        title(strcat(int2str(trial_info_trimmed(iTrial).Potential_Rearing(ii).Frame), ...
+            " (", int2str(ii), ")", " - a = rearing, s = not rearing,", ...
+            " d = head raise, f = at port, v = unsure"));
+        axis image
+        axis tight
+        hold on
+
+        figure(gcf);
+
+        waitfor(gcf,'CurrentCharacter');
+        switch uint8(get(gcf,'CurrentCharacter'))
+            % a = 0 rearing
+            case 97, trial_info_trimmed(iTrial).Potential_Rearing(ii).rear_value = 0;
+            % s = 1 not rearing
+            case 115, trial_info_trimmed(iTrial).Potential_Rearing(ii).rear_value = 1;
+            % d = 2 head raise
+            case 100, trial_info_trimmed(iTrial).Potential_Rearing(ii).rear_value = 2;
+            % f = 3 at port
+            case 102, trial_info_trimmed(iTrial).Potential_Rearing(ii).rear_value = 3; 
+            % v = 4 unsure
+            case 118, trial_info_trimmed(iTrial).Potential_Rearing(ii).rear_value = 4; 
+            otherwise, break;
+        end
+        set(gcf,'CurrentCharacter','p');
+        pause(.3);
     end
-    set(gcf,'CurrentCharacter','p');
-    pause(.3);
+    
+    save('rearing_test_8.29-final.mat', 'trial_info_trimmed', '-append');
 end
-
-rear_value = [rear_trim(iTrial).Rearing_Frames.rear_value];
-iTrial = iTrial + 1;
 close all
 
+%% cleanup/remove images for data storage (after making full copy)
+for ii = 1:numel(trial_info_trimmed)
+    for zz = 1:numel(trial_info_trimmed(ii).Potential_Rearing)
+        if isfield(trial_info_trimmed(ii).Potential_Rearing, 'Image')
+            trial_info_trimmed(ii).Potential_Rearing = rmfield( ...
+                trial_info_trimmed(ii).Potential_Rearing, 'Image');
+        else
+            continue;
+        end
+    end
+end
+
+%% delete
+frame_count = 0;
+
+for ii = 1:numel(trial_info_trimmed)
+    frame_count = frame_count + numel(trial_info_trimmed(ii).Potential_Rearing);
+end
+
 %% body euc distance transformations
+
+% get trial list indices for working dataset
+trial_list(length(rear_trim)) = 0;
+for zz = 1 : length(trial_list)
+    trial_list(zz) = dataset.filterTrialset("byName",rear_trim(zz).Name);
+end
 
 for ii = 1 : length(trial_list)
     t_trial = dataset.TrialDataset(trial_list(ii));

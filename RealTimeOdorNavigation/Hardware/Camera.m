@@ -143,7 +143,7 @@ classdef Camera < handle
                 dist_out double
             end
 
-            dist_out = pdist2([p1(1), p2(1)],[p1(2), p2(2)]);
+            dist_out = pdist2(p1, p2);
         end
 
         %% Midpoint Calculation

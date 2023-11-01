@@ -193,19 +193,22 @@ end
 % REARING DATA GROUND TRUTH %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-rand_sample = randsample(dataset.TrialDataset(1:end), 25);  % random sample of 25 trials
+% rand_sample = randsample(dataset.TrialDataset(1:end), 25);  % random sample of 25 trials
 trial_info = struct;    % create struct to hold data
 
 % loop through selected trials, populate struct
-for zz = 10:numel(rand_sample)
-    fprintf('[RTON] === Iterating trial %i ===', zz)    
+for zz = 1:numel(dataset.TrialDataset)
+    fprintf('[RTON] === Iterating trial %i of %i ===\n', zz, numel(dataset.TrialDataset))    
+    trial_info(zz).Name = dataset.TrialDataset(zz).Name;                 % Name
     % Index w/in Dataset
     trial_info(zz).Dataset_Index = dataset.filterTrialset("byName",trial_info(zz).Name);
-    trial_info(zz).Subject = rand_sample(zz).SubjectID;         % SubjectID
-    trial_info(zz).Name = rand_sample(zz).Name;                 % Name
-    [t_behav, ~, ~] = rand_sample(zz).getBehavioralData();
-    trial_info(zz).Potential_Rearing = t_behav;                 % Behavioral Data (Frames)
+    trial_info(zz).Subject = dataset.TrialDataset(zz).SubjectID;         % SubjectID
+    [t_behav, ~, ~] = dataset.TrialDataset(zz).getBehavioralData(IncludeImages=false);
+    if ~isempty(t_behav), trial_info(zz).Potential_Rearing = t_behav; 
+    else, fprintf('[RTON] Trial %i contains 0 potential rearing frames\n',zz); end
 end
+
+save('lane-final-dataset.mat', 'trial_info');
 
 %% frame selection/specification loop
 for ii = 2:numel(trial_info_trimmed)
@@ -351,7 +354,36 @@ for ii = 1 : length(trial_list)
     end
 end
 
+%%
+count = 1;
+data_out = struct;
 
+for zz = 1:numel(trial_info)
+    if isfield(trial_info(zz).Potential_Rearing,'Frame')
+        for ii = 1:numel(trial_info(zz).Potential_Rearing)
+            data_out(count).Trial_Number = trial_info(zz).Dataset_Index;
+            data_out(count).Subject = trial_info(zz).Subject;
+
+            data_out(count).Frame = trial_info(zz).Potential_Rearing(ii).Frame;
+            data_out(count).xz_diff = trial_info(zz).Potential_Rearing(ii).xz_diff;
+            data_out(count).HeadBody = trial_info(zz).Potential_Rearing(ii).HeadBody;
+            data_out(count).MouseX = trial_info(zz).Potential_Rearing(ii).MouseX;
+            data_out(count).MouseY = trial_info(zz).Potential_Rearing(ii).MouseY;
+            data_out(count).PortX = trial_info(zz).Potential_Rearing(ii).PortX;
+            data_out(count).PortY = trial_info(zz).Potential_Rearing(ii).PortY;
+
+            data_out(count).Name = trial_info(zz).Name;
+
+            count = count + 1;
+        end
+    end
+end
+
+trial_info1 = table({trial_info.Name}.', [trial_info.Dataset_Index].', [trial_info.Subject].', {trial_info.Potential_Rearing}.', 'VariableNames', {'Name', 'Dataset_Index', 'Subject', 'Potential_Rearing'});
+temp = struct2cell(data_out.').';
+data_out1 = table([data_out.Trial_Number].', [data_out.Subject].', [data_out.Frame].', [data_out.xz_diff].', [data_out.HeadBody].', [data_out.MouseX].', [data_out.MouseY].', [data_out.PortX].', [data_out.PortY].', temp(:, 10), 'VariableNames', {'Trial_Number', 'Subject', 'Frame', 'xz_diff', 'HeadBody', 'MouseX', 'MouseY', 'PortX', 'PortY', 'Name'});
+clear temp
+writetable(data_out1,filename);
 
 %%
 %{   

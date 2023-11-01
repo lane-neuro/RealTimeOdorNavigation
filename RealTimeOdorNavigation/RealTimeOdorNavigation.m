@@ -149,6 +149,21 @@ classdef RealTimeOdorNavigation < handle
             end
         end
 
+        function data_out = getFormattedOutputForTrials(this, iTrials)
+            arguments (Input)
+                this RealTimeOdorNavigation    
+                iTrials
+            end
+            
+            nTrials = length(iTrials);
+            for ii = 1 : nTrials
+                if(nTrials > 1)
+                    fprintf('[RTON] Collecting Requested Data (%i/%i)\n', ii, nTrials);
+                end
+                data_out = this.TrialDataset(iTrials(ii)).formattedTrialOutput();
+            end
+        end
+
         function vel_out = getSpeedForFramesInTrials(this, iTrials, iFrames)
             % GETSPEEDFORFRAMESINTRIALS   Returns velocity array for frame(s) in Trial(s)
             %

@@ -106,14 +106,34 @@ classdef Camera < handle
             arguments (Input)
                 this Camera
                 p1_name string {mustBeMember(p1_name, ...
-                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port", ...
+                    "CenterofHead"])}
                 p2_name string {mustBeMember(p2_name, ...
-                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                    ["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port", ...
+                    "CenterofHead"])}
             end
 
-            p1 = this.(p1_name);
-            p2 = this.(p2_name);
-            ang = atan2d(p2.getY() - p1.getY(), p2.getX() - p1.getX());
+            if (p1_name == "CenterofHead")
+                p1 = this.getHeadCenter();
+                p1_x = p1(1);
+                p1_y = p1(2);
+            else 
+                p1 = this.(p1_name); 
+                p1_x = p1.getX();
+                p1_y = p1.getY();
+            end
+
+            if (p2_name == "CenterofHead")
+                p2 = this.getHeadCenter();
+                p2_x = p2(1);
+                p2_y = p2(2);
+            else
+                p2 = this.(p2_name);
+                p2_x = p2.getX();
+                p2_y = p2.getY();
+            end
+
+            ang = atan2d(p2_y - p1_y, p2_x - p1_x);
             if ang < 0, ang = ang + 360; end % add 360 deg if calculated ang < 0
         end
 

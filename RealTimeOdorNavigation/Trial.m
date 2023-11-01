@@ -438,16 +438,15 @@ classdef Trial < handle
             arguments (Input)
                 this Trial
                 frames
-                options.PositionData = this.getPositionData(frames)
+                options.PositionData = this.PositionFile.positionData
             end
 
             fprintf('[RTON] getBodyDistanceForFrames(): Init \n');
             a = zeros(length(frames), 0);
-            pos_data = options.PositionData;
 
             fprintf('[RTON] getBodyDistanceForFrames(): Collecting Distances\n');
-            for ii = 1:length(pos_data)
-                a(ii) = pos_data(ii).getBodyDistance();
+            for ii = 1:length(frames)
+                a(ii) = options.PositionData(frames(ii)).getBodyDistance();
             end
 
             fprintf('[RTON] getBodyDistanceForFrames(): Returning Data Struct \n');
@@ -522,6 +521,7 @@ classdef Trial < handle
         function [rearing_out, foraging_out, dlc_out] = getBehavioralData(this, options)
             arguments (Input)
                 this Trial
+                options.IncludeImages = false
                 options.PositionData = this.PositionFile.positionData
                 options.EthData = this.EthFile.ethData
                 options.AccData = this.AccFile.accData
@@ -544,7 +544,7 @@ classdef Trial < handle
             frame_stamp = acc_out(:,5);
 
             DLCOutput = this.getFrameData(PositionData=options.PositionData, ...
-                Valid_Type='all', Validity_Verbose=true, Likelihood=true);
+                Valid_Type="all", Validity_Verbose=true, Likelihood=true);
             nFrames = size(DLCOutput.FrameIndex,2);
             f_c = (max(t_s)./1000)./nFrames;
             t_camera = DLCOutput.FrameIndex(:).*f_c;
@@ -597,6 +597,11 @@ classdef Trial < handle
             ETHdeconv = ifft(ETHdeconv_fft);
 
             xz_diff2 = interp1(ts, xz_diff, t_camera);
+            acc_x2 = interp1(ts, med_x, t_camera);
+            acc_y2 = interp1(ts, med_y, t_camera);
+            acc_z2 = interp1(ts, med_z, t_camera);
+
+            DLCOutput.AccData = [acc_x2, acc_y2, acc_z2];
 
             raw_Frames = find(xz_diff2 >= thr);
             if size(raw_Frames,1) > 0
@@ -606,14 +611,34 @@ classdef Trial < handle
                 end
 
                 valid = raw_Frames(find(raw_Frames(:,3)==1),:);
-                imgs = this.getImagesForFrames(valid(:,1));
-                body_dist = this.getBodyDistanceForFrames(valid(:,1));
+                body_dist = this.getBodyDistanceForFrames(valid(:,1), ...
+                    PositionData=options.PositionData);
+                frame_data = this.getCoordsForFrames(valid(:,1), ...
+                    PositionData=options.PositionData, Port=true);
+
+                temp_out = struct;
+                temp_imgs = struct;
+
+                if options.IncludeImages
+                    temp_imgs = this.getImagesForFrames(valid(:,1));
+                end
+
                 for zz = 1:numel(valid(:,1))
-                    imgs(zz).xz_diff = valid(zz,2);
-                    imgs(zz).HeadBody = body_dist(zz,2);
+                    temp_out(zz).Frame = valid(zz, 1);
+
+                    if options.IncludeImages
+                        temp_out(zz).Image = temp_imgs(zz).Image;
+                    end
+
+                    temp_out(zz).xz_diff = valid(zz,2);
+                    temp_out(zz).HeadBody = body_dist(zz,2);
+                    temp_out(zz).MouseX = frame_data(5, 1, zz);
+                    temp_out(zz).MouseY = frame_data(5, 2, zz);
+                    temp_out(zz).PortX = frame_data(7, 1, zz);
+                    temp_out(zz).PortY = frame_data(7, 2, zz);
                     %imgs(zz).Validity = valid(zz,3);
                 end
-                rearing_out = imgs;
+                rearing_out = temp_out;
             else
                 rearing_out = struct;
             end
@@ -740,6 +765,66 @@ classdef Trial < handle
             end
 
             fprintf('[RTON] getDataStruct(): Returning Data Struct \n');
+        end
+    
+        function csv_out = formattedTrialOutput(this, options)
+            arguments (Input)
+                this Trial
+                options.PositionData = this.PositionFile.positionData
+                options.EthData = this.EthFile.ethData
+                options.AccData = this.AccFile.accData
+            end
+            
+            varNames = {'frame', 'TB_x', 'TB_y', ...            
+                'euc_dist-1', 'theta-1', 'ang_vel-1', ...       
+                'euc_dist-2', 'theta-2', 'ang_vel-2', ...
+                'euc_dist-3', 'theta-3', 'ang_vel-3', ...
+                'acc-x', 'acc-y', 'acc-z'};
+
+            data_table = array2table(zeros(0,15),'VariableNames',varNames);
+
+            % gather frame data for trial
+            [~, ~, trial_data] = this.getBehavioralData(AccData=options.AccData, ...
+                EthData=options.EthData, PositionData=options.PositionData, ...
+                IncludeImages=false);
+
+            for ii = 1 : numel(trial_data.FrameIndex)
+                % frame number & tailbase-coords (TB)
+                data_table(ii, 1) = {trial_data.FrameIndex(ii)};              % frame
+                data_table(ii, 2) = {trial_data.FrameCoordinates(6, 1, ii)};  % TB_x
+                data_table(ii, 3) = {trial_data.FrameCoordinates(6, 2, ii)};  % TB_y
+
+                % euclidean distance, theta, angular velocity: TB -> Body
+                data_table(ii, 4) = {options.PositionData(ii).getPointDistance( ...
+                    "Tailbase", "Body")};      % euc dist
+                data_table(ii, 5) = {options.PositionData(ii).getFrameAngle( ...
+                    "Tailbase", "Body")};      % theta
+                data_table(ii, 6) = {0};      % ang vel
+
+                % euclidean distance, theta, angular velocity: Body -> Neck
+                data_table(ii, 7) = {options.PositionData(ii).getPointDistance( ...
+                    "Body", "Neck")};      % euc dist
+                data_table(ii, 8) = {options.PositionData(ii).getFrameAngle( ...
+                    "Body", "Neck")};      % theta
+                data_table(ii, 9) = {0};      % ang vel
+
+
+                % euclidean distance, theta, angular velocity: Neck -> Center of Head
+                % (CoH)
+                data_table(ii, 10) = {options.PositionData(ii).getPointDistance( ...
+                    "Neck", "CenterofHead")};      % euc dist
+                data_table(ii, 11) = {options.PositionData(ii).getFrameAngle( ...
+                    "Neck", "CenterofHead")};      % theta
+                data_table(ii, 12) = {0};      % ang vel
+
+                % accelerometer x, y, z
+                data_table(ii, 13) = {trial_data.AccData(ii, 1)};      % acc_x
+                data_table(ii, 14) = {trial_data.AccData(ii, 2)};      % acc_y
+                data_table(ii, 15) = {trial_data.AccData(ii, 3)};      % acc_z
+
+            end
+            
+            csv_out = data_table;
         end
     end
     

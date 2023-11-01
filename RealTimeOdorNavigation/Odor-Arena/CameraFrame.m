@@ -59,11 +59,27 @@ classdef CameraFrame
         function out1 = getFrameAngle(this, p1_name, p2_name)
             arguments (Input)
                 this CameraFrame
-                p1_name string {mustBeMember(p1_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
-                p2_name string {mustBeMember(p2_name,["Nose","LeftEar","RightEar","Neck","Body","Tailbase","Port"])}
+                p1_name string {mustBeMember(p1_name,["Nose","LeftEar","RightEar", ...
+                    "Neck","Body","Tailbase","Port","CenterofHead"])}
+                p2_name string {mustBeMember(p2_name,["Nose","LeftEar","RightEar", ...
+                    "Neck","Body","Tailbase","Port","CenterofHead"])}
             end
 
             out1 = this.CameraData.calcAngleBetweenCoords(p1_name, p2_name);
+        end
+
+        function [x_out, y_out] = getHeadMidpoint(this)
+            arguments (Input)
+                this CameraFrame
+            end
+            arguments (Output)
+                x_out double
+                y_out double
+            end
+
+            p1 = this.CameraData.getHeadCenter();
+            x_out = p1(1);
+            y_out = p1(2);
         end
 
         function dist_out = getBodyDistance(this)
@@ -76,6 +92,35 @@ classdef CameraFrame
             
             p1 = this.CameraData.getHeadCenter();
             [p2(1), p2(2), ~] = this.CameraData.getBody();
+            dist_out = this.CameraData.calcBehaviorDistance(p1,p2);
+        end
+
+        function dist_out = getPointDistance(this, p1_name, p2_name)
+            arguments (Input)
+                this CameraFrame
+                p1_name string {mustBeMember(p1_name,["Nose","LeftEar","RightEar", ...
+                    "Neck","Body","Tailbase","Port","CenterofHead"])}
+                p2_name string {mustBeMember(p2_name,["Nose","LeftEar","RightEar", ...
+                    "Neck","Body","Tailbase","Port","CenterofHead"])}
+            end
+            arguments (Output)
+                dist_out double
+            end
+            
+            if (p1_name == "CenterofHead")
+                p1 = this.CameraData.getHeadCenter();
+            else
+                p1(1) = this.CameraData.(p1_name).getX();
+                p1(2) = this.CameraData.(p1_name).getY();
+            end
+
+            if (p2_name == "CenterofHead")
+                p2 = this.CameraData.getHeadCenter();
+            else
+                p2(1) = this.CameraData.(p2_name).getX();
+                p2(2) = this.CameraData.(p2_name).getY();
+            end
+
             dist_out = this.CameraData.calcBehaviorDistance(p1,p2);
         end
         
